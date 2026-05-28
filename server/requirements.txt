@@ -1,0 +1,17 @@
+langchain
+langgraph
+fastembed
+python-dotenv
+pydantic
+fastapi
+uvicorn
+redis
+alembic
+PyJWT
+bcrypt
+sqlalchemy
+psycopg2
+pytest
+pydantic-settings
+python-multipart
+shutil
