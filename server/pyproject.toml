@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "alembic>=1.18.4",
+    "asyncio-redis>=0.16.0",
     "bcrypt>=5.0.0",
     "fastapi>=0.136.3",
     "fastembed>=0.8.0",

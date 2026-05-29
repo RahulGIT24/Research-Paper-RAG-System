@@ -1,7 +1,7 @@
 from fastapi import APIRouter,Depends,status,Response, Request
 from sqlalchemy.orm import Session
-from app.db.session import get_db
-from app.db.models import SignUp, Login, ForgotPasswordRequest, ResetPasswordRequest
+from shared_lib.db.session import get_db
+from shared_lib.pydantic_models.models import SignUp, Login, ForgotPasswordRequest, ResetPasswordRequest
 from app.models import User
 from app.core.exceptions import BaseAPIException
 import bcrypt

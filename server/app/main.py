@@ -4,13 +4,25 @@ from fastapi.responses import JSONResponse
 from app.core.exceptions import BaseAPIException
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
+from shared_lib.infra.redis import redis_instance
 from app.core.constants import UPLOAD_DIR
+from contextlib import asynccontextmanager
 
 load_dotenv()
 
 UPLOAD_DIR.mkdir(exist_ok=True)
 
-app = FastAPI(title="DataVaultServer")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await redis_instance.create_consumer_groups()
+    print("Redis consumer groups ready")
+
+    yield
+
+    await redis_instance.client.close()
+
+
+app = FastAPI(title="DataVaultServer",lifespan=lifespan)
 origins = [
     "http://localhost:5173",   
 ]

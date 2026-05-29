@@ -6,7 +6,7 @@ from jwt.exceptions import (
 )
 import jwt
 from app.core.config import settings
-from app.db.session import get_db
+from shared_lib.db.session import get_db
 from app.models import User
 from app.core.exceptions import BaseAPIException
 

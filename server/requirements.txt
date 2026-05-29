@@ -14,4 +14,4 @@ psycopg2
 pytest
 pydantic-settings
 python-multipart
-shutil
+asyncio-redis

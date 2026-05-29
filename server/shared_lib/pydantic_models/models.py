@@ -15,3 +15,10 @@ class ForgotPasswordRequest(BaseModel):
 class ResetPasswordRequest(BaseModel):
     token: str
     new_password: str
+
+class JobData(BaseModel):
+    id:str
+    filepath:str
+    uploaded_by:str
+    status:str
+    ext:str
