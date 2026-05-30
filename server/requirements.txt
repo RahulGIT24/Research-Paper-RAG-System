@@ -15,3 +15,7 @@ pytest
 pydantic-settings
 python-multipart
 asyncio-redis
+langchain-community
+pymupdf
+langchain-text-splitters
+llama-index-embeddings-fastembed

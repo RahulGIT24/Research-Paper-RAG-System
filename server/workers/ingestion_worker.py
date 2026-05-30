@@ -1,3 +1,4 @@
+from shared_lib.chunking.SemanticChunker import SemanticChunker
 import json
 from shared_lib.infra.redis import redis_client
 import json
@@ -35,5 +36,6 @@ async def run_worker(processor:ProcessJob):
 #     results = await asyncio.run(run_worker())
 
 if __name__ == "__main__":
-    processor = ProcessJob(redis_client=redis_client,db=next(get_db()))
+    splitter = SemanticChunker()
+    processor = ProcessJob(redis_client=redis_client,db=next(get_db()),splitter=splitter)
     asyncio.run(main=run_worker(processor))
