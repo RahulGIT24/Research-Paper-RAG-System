@@ -1,7 +1,7 @@
 from fastapi import APIRouter, UploadFile,status,Depends
-from app.core.exceptions import BaseAPIException
+from shared_lib.core.exceptions import BaseAPIException
 from shared_lib.db.session import get_db
-from app.core.constants import UPLOAD_DIR
+from shared_lib.core.constants import UPLOAD_DIR
 from app.models import Document
 from app.middleware.auth import get_current_user
 import uuid

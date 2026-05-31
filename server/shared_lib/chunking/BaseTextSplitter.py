@@ -5,6 +5,6 @@ class BaseSplitter:
     @staticmethod
     def get_base_splitter():
         return SentenceSplitter(
-        chunk_size=800,
-        chunk_overlap=100
+        chunk_size=430,
+        chunk_overlap=75
     )

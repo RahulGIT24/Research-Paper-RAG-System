@@ -17,5 +17,7 @@ python-multipart
 asyncio-redis
 langchain-community
 pymupdf
+llama-index-vector-stores-qdrant
 langchain-text-splitters
 llama-index-embeddings-fastembed
+langchain_community

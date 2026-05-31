@@ -3,13 +3,14 @@ from llama_index.core.node_parser import (
 )
 from llama_index.embeddings.fastembed import FastEmbedEmbedding
 
+EMBED_MODEL = FastEmbedEmbedding(
+    model_name="BAAI/bge-small-en-v1.5"
+)
 class SemanticChunker:
     @staticmethod
-    def get_semantic_splitter(model:str="BAAI/bge-small-en-v1.5"):
-        embed_model = FastEmbedEmbedding(model_name=model)
-
+    def get_semantic_splitter():
         return SemanticSplitterNodeParser(
             buffer_size=1,
             breakpoint_percentile_threshold=80,
-            embed_model=embed_model
+            embed_model=EMBED_MODEL
         )

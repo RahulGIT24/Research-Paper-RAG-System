@@ -10,9 +10,6 @@ class HybridChunking:
         semantic_splitter = SemanticChunker.get_semantic_splitter()
         coarse_chunks = base_splitter.get_nodes_from_documents(docs)
 
-        final_chunks = []
-        for chunk in coarse_chunks:
-            refined = semantic_splitter.get_nodes_from_documents([chunk])
-            final_chunks.extend(refined)
+        final_chunks = semantic_splitter.get_nodes_from_documents(coarse_chunks)
 
         return final_chunks

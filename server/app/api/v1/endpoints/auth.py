@@ -3,12 +3,12 @@ from sqlalchemy.orm import Session
 from shared_lib.db.session import get_db
 from shared_lib.pydantic_models.models import SignUp, Login, ForgotPasswordRequest, ResetPasswordRequest
 from app.models import User
-from app.core.exceptions import BaseAPIException
+from shared_lib.core.exceptions import BaseAPIException
 import bcrypt
 import jwt
 from datetime import datetime, timedelta
 from jwt.exceptions import ExpiredSignatureError, InvalidSignatureError, InvalidTokenError
-from app.core.config import settings
+from shared_lib.core.config import settings
 
 router = APIRouter()
 

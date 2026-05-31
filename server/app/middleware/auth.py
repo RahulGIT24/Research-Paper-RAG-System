@@ -5,10 +5,10 @@ from jwt.exceptions import (
     InvalidTokenError
 )
 import jwt
-from app.core.config import settings
+from shared_lib.core.config import settings
 from shared_lib.db.session import get_db
 from app.models import User
-from app.core.exceptions import BaseAPIException
+from shared_lib.core.exceptions import BaseAPIException
 
 SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = "HS256"

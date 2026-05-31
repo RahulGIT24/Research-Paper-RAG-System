@@ -16,6 +16,7 @@ dependencies = [
     "langgraph>=1.2.2",
     "llama-index>=0.14.22",
     "llama-index-embeddings-fastembed>=0.6.0",
+    "llama-index-vector-stores-qdrant>=0.10.1",
     "psycopg2>=2.9.12",
     "pydantic-settings>=2.14.1",
     "pydantic[email]>=2.13.4",

@@ -14,13 +14,11 @@ class ProcessJob:
         ext = data['ext']
         if ext == 'pdf':
             await self._process_pdf(data['filepath'])
-    
+
     async def _process_pdf(self,filepath:str):
         pdf = PyMuPDFLoader(file_path=filepath)
         docs = pdf.load()
-        full_text = "\n".join(doc.page_content for doc in docs)
-        chunks = HybridChunking.hybrid_chunks(full_text=full_text)
-        print(chunks)
+        
 
     
     async def _process_excel():

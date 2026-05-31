@@ -8,11 +8,12 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
 
-    NOTION_CLIENT_ID: str
-    NOTION_CLIENT_SECRET: str
-    NOTION_REDIRECT_URI: str
     REDIS_HOST:str
     REDIS_PORT:str
+
+    QDRANT_URL:str
+    QDRANT_API_KEY:str | None = None
+    QDRANT_COLLECTION:str
 
     class Config:
         env_file = ".env"

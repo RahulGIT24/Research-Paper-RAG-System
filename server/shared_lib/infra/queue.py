@@ -1,7 +1,7 @@
 from .redis import redis_client
 from shared_lib.pydantic_models.models import JobData
 import json
-from app.core.exceptions import BaseAPIException
+from shared_lib.core.exceptions import BaseAPIException
 
 async def ingest(job_data:JobData):
     try:

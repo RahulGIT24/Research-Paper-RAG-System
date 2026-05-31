@@ -1,5 +1,5 @@
 import redis.asyncio as redis
-from app.core.config import settings
+from shared_lib.core.config import settings
 from redis.exceptions import ResponseError
 
 class RedisClient:
