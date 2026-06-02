@@ -21,3 +21,4 @@ llama-index-vector-stores-qdrant
 langchain-text-splitters
 llama-index-embeddings-fastembed
 langchain_community
+langchain-groq

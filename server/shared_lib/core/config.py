@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     QDRANT_URL:str
     QDRANT_API_KEY:str | None = None
     QDRANT_COLLECTION:str
+    LLM_API:str
+    LLM_MODEL:str
 
     class Config:
         env_file = ".env"

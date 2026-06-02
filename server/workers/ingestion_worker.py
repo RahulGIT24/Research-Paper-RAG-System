@@ -41,11 +41,7 @@ if __name__ == "__main__":
     try:
         splitter = SemanticChunker()
 
-        qdrant = QdrantVectorService(
-            qdrant_url=settings.QDRANT_URL,
-            collection_name=settings.QDRANT_COLLECTION,
-            api_key=settings.QDRANT_API_KEY
-        )
+        qdrant = QdrantVectorService()
 
         processor = ProcessJob(
             redis_client=redis_client,
