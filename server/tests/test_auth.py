@@ -2,13 +2,8 @@ import jwt
 import uuid
 
 from datetime import datetime, timedelta
-from fastapi.testclient import TestClient
-
-from app.main import app
+from .test_client import client
 from app.api.v1.endpoints.auth import SECRET_KEY, ALGORITHM
-
-client = TestClient(app)
-
 
 def random_email():
     return f"{uuid.uuid4()}@example.com"
