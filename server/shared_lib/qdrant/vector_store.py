@@ -1,14 +1,15 @@
 from typing import List
-
-import qdrant_client
-from llama_index.core import Settings, VectorStoreIndex, Document
-from llama_index.vector_stores.qdrant import QdrantVectorStore
-from .embed_model import EmbedModel
-from qdrant_client import QdrantClient
-from qdrant_client.models import PointStruct
 import uuid
 
+from llama_index.core import Document
+from qdrant_client import QdrantClient
+from qdrant_client.models import PointStruct
+
+from .embed_model import EmbedModel
+
+
 class QdrantVectorService:
+
     def __init__(
         self,
         qdrant_url: str,
@@ -17,74 +18,47 @@ class QdrantVectorService:
     ):
         self.collection_name = collection_name
 
-        self.client = qdrant_client.QdrantClient(
+        self.client = QdrantClient(
             url=qdrant_url,
             api_key=api_key,
         )
 
         self.embed_model = EmbedModel.get_embed_model()
 
-        self.vector_store = QdrantVectorStore(
-            client=self.client,
-            collection_name=self.collection_name,
-        )
-
     def ingest_documents(
         self,
         documents: List[Document],
-    ) -> VectorStoreIndex:
-        """
-        Creates embeddings and stores them in Qdrant.
-        """
-        print("Ingesting Documents.......")
-        points = []
+        user_id:str
+    ) -> bool:
 
-        for doc in documents:
-            vector = self.embed_model.get_text_embedding(doc.text)
+        if not documents:
+            return True
 
-            points.append(
-                PointStruct(
-                    id=str(uuid.uuid4()),
-                    vector=vector,
-                    payload={
-                        "text": doc.text,
-                        "page": doc.metadata.get("page"),
-                        "source": doc.metadata.get("source")
-                    }
-                )
+        texts = [doc.text for doc in documents]
+
+        vectors = self.embed_model.get_text_embedding_batch(
+            texts
+        )
+
+        points = [
+            PointStruct(
+                id=str(uuid.uuid4()),
+                vector=vector,
+                payload={
+                    "text": doc.text,
+                    "page": doc.metadata.get("page"),
+                    "source": doc.metadata.get("source"),
+                    "file_path": doc.metadata.get("file_path"),
+                    "user_id":user_id
+                },
             )
+            for doc, vector in zip(documents, vectors)
+        ]
 
         self.client.upsert(
             collection_name=self.collection_name,
-            points=points
+            points=points,
+            wait=False, 
         )
 
         return True
-
-    def get_index(self) -> VectorStoreIndex:
-        """
-        Connect to an existing collection.
-        """
-
-        return VectorStoreIndex.from_vector_store(
-            vector_store=self.vector_store
-        )
-
-    def query(
-        self,
-        query_text: str,
-        top_k: int = 5,
-    ) -> str:
-        """
-        Query the collection.
-        """
-
-        index = self.get_index()
-
-        query_engine = index.as_query_engine(
-            similarity_top_k=top_k
-        )
-
-        response = query_engine.query(query_text)
-
-        return str(response)

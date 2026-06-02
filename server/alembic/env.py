@@ -8,7 +8,7 @@ from shared_lib.db.base import Base
 import os
 from dotenv import load_dotenv
 load_dotenv()
-import app.models
+import shared_lib.models
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

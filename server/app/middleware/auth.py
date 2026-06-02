@@ -7,7 +7,7 @@ from jwt.exceptions import (
 import jwt
 from shared_lib.core.config import settings
 from shared_lib.db.session import get_db
-from app.models import User
+from shared_lib.models import User
 from shared_lib.core.exceptions import BaseAPIException
 
 SECRET_KEY = settings.SECRET_KEY

@@ -2,7 +2,7 @@ from fastapi import APIRouter, UploadFile,status,Depends
 from shared_lib.core.exceptions import BaseAPIException
 from shared_lib.db.session import get_db
 from shared_lib.core.constants import UPLOAD_DIR
-from app.models import Document
+from shared_lib.models import Document
 from app.middleware.auth import get_current_user
 import uuid
 from shared_lib.infra.queue import ingest

@@ -2,7 +2,7 @@ from fastapi import APIRouter,Depends,status,Response, Request
 from sqlalchemy.orm import Session
 from shared_lib.db.session import get_db
 from shared_lib.pydantic_models.models import SignUp, Login, ForgotPasswordRequest, ResetPasswordRequest
-from app.models import User
+from shared_lib.models import User
 from shared_lib.core.exceptions import BaseAPIException
 import bcrypt
 import jwt
