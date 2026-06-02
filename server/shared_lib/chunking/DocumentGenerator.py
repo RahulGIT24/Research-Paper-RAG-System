@@ -2,7 +2,7 @@ from llama_index.core import Document as LlamaDocument
 
 class DocumentGenerator:
     @staticmethod
-    def generate_docs(docs,llama_docs,filepath):
+    def generate_docs(docs,filepath):
         skip_keywords = {
             "acknowledgements",
             "about the author",

@@ -5,6 +5,8 @@ import json
 from .process_job import ProcessJob
 import asyncio
 from shared_lib.db.session import get_db
+from shared_lib.qdrant.vector_store import QdrantVectorService
+from shared_lib.core.config import settings
 
 # should be run as a module in terminal
 # uv run python -m workers.ingestion_worker
@@ -37,5 +39,6 @@ async def run_worker(processor:ProcessJob):
 
 if __name__ == "__main__":
     splitter = SemanticChunker()
-    processor = ProcessJob(redis_client=redis_client,db=next(get_db()),splitter=splitter)
+    qdrant = QdrantVectorService(qdrant_url=settings.QDRANT_URL,collection_name=settings.QDRANT_COLLECTION,api_key=settings.QDRANT_API_KEY)
+    processor = ProcessJob(redis_client=redis_client,db=next(get_db()),splitter=splitter,qdrant_service=qdrant)
     asyncio.run(main=run_worker(processor))

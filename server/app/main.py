@@ -17,16 +17,19 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 def create_qdrant_collection():
     client = QdrantClient(url=settings.QDRANT_URL,api_key=settings.QDRANT_API_KEY)
     client.collection_exists(collection_name=settings.QDRANT_COLLECTION)
+    print("Creating Collection")
+    if(client.collection_exists(collection_name="{collection_name}")):
+        return
     try:
-        if(client.collection_exists(collection_name="{collection_name}")):
-            return
         client.create_collection(
             collection_name=settings.QDRANT_COLLECTION,
-            vectors_config=models.VectorParams(size=100, distance=models.Distance.COSINE),
+            vectors_config=models.VectorParams(size=384, distance=models.Distance.COSINE),
         )
+        print("Collection Created")
     except Exception as e:
         print(e)
-        raise e
+    finally:
+        client.close()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
