@@ -33,7 +33,7 @@ class ProcessJob:
         db.commit()
         print("Status Updated")
         llama_docs = DocumentGenerator.generate_docs(docs,filepath)
-        self.qdrant_service.ingest_documents(llama_docs,user_id)
+        self.qdrant_service.ingest_documents(llama_docs,user_id,doc_id)
         print("Ingested Successfully")
         db.query(Document).filter(
             Document.id == doc_id

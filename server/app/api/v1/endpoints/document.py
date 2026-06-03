@@ -6,11 +6,14 @@ from shared_lib.models import Document
 from app.middleware.auth import get_current_user
 import uuid
 from shared_lib.infra.queue import ingest
+from pathlib import Path
 from sqlalchemy.orm import Session
 from shared_lib.pydantic_models.models import JobData
+from shared_lib.qdrant.vector_store import QdrantVectorService
 import shutil
 
 router = APIRouter()
+qdrant = QdrantVectorService()
 
 allowed_extensions = ["pdf"]
 
@@ -56,3 +59,102 @@ async def upload(file:UploadFile,current_user=Depends(get_current_user),db:Sessi
             db.rollback()
             raise BaseAPIException(message="Internal Server Error",status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+@router.get("/")
+def get_documents(
+    page: int = 1,
+    limit: int = 10,
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    offset = (page - 1) * limit
+
+    query = (
+        db.query(Document)
+        .filter(
+            Document.uploaded_by == str(current_user["id"]),
+            Document.deleted == False
+        )
+    )
+
+    total = query.count()
+
+    documents = (
+        query.order_by(Document.created_at.desc())
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+
+    return {
+        "page": page,
+        "limit": limit,
+        "total": total,
+        "documents": [
+            {
+                "id": str(doc.id),
+                "file_name": doc.original_name,
+                "file_ext": doc.file_ext,
+                "uploaded_at": doc.created_at,
+            }
+            for doc in documents
+        ]
+    }
+
+@router.get("/{document_id}")
+def get_document(
+    document_id: str,
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    document = (
+        db.query(Document)
+        .filter(
+            Document.id == document_id,
+            Document.uploaded_by == str(current_user["id"]),
+            Document.deleted == False
+        )
+        .first()
+    )
+
+    if not document:
+        raise BaseAPIException(
+            status_code=404,
+            message="Document not found"
+        )
+
+    return {
+        "id": str(document.id),
+        "file_name": document.original_name,
+        "file_ext": document.file_ext,
+        "file_path": document.file_path,
+        "uploaded_at": document.created_at,
+    }
+
+@router.delete("/{document_id}")
+def delete_document(
+    document_id: str,
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    document = (
+        db.query(Document)
+        .filter(
+            Document.id == document_id,
+            Document.uploaded_by == str(current_user["id"])
+        )
+        .first()
+    )
+
+    if not document:
+        raise BaseAPIException(
+            status_code=404,
+            message="Document not found"
+        )
+
+    document.is_deleted = True
+    qdrant.delete_vectors(doc_id=document_id)
+    db.commit()
+
+    return {
+        "message": "Document deleted successfully"
+    }

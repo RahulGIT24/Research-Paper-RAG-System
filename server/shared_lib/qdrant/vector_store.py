@@ -25,7 +25,8 @@ class QdrantVectorService:
     def ingest_documents(
         self,
         documents: List[Document],
-        user_id:str
+        user_id:str,
+        doc_id:str
     ) -> bool:
 
         if not documents:
@@ -46,7 +47,8 @@ class QdrantVectorService:
                     "page": doc.metadata.get("page"),
                     "source": doc.metadata.get("source"),
                     "file_path": doc.metadata.get("file_path"),
-                    "user_id":user_id
+                    "user_id":user_id,
+                    "doc_id":doc_id
                 },
             )
             for doc, vector in zip(documents, vectors)
@@ -86,3 +88,17 @@ class QdrantVectorService:
                 "page": point.payload.get("page")
             })
         return results
+    
+    def delete_vectors(self,doc_id:str):
+        self.client.delete(
+            collection_name=settings.QDRANT_COLLECTION,
+            points_selector=Filter(
+                must=[
+                    FieldCondition(
+                        key="doc_od",
+                        match=MatchValue(value=str(doc_id))
+                    )
+                ]
+            )
+        )
+        return True
