@@ -22,3 +22,7 @@ class JobData(BaseModel):
     uploaded_by:str
     status:str
     ext:str
+
+class DeleteJob(BaseModel):
+    document_id: str
+    file_path: str

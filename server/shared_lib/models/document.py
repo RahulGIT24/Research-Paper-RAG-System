@@ -22,6 +22,7 @@ class Document(Base):
     original_name = Column(String,nullable=False)
     created_at = Column(DateTime(timezone=True),default=datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True),default=datetime.now(timezone.utc))
+    deleted_at = Column(DateTime(timezone=True),default=None)
     file_ext = Column(String,nullable=False)
     uploaded_by = Column(ForeignKey("users.id"))
     status = Column(

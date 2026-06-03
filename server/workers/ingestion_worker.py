@@ -30,11 +30,20 @@ async def run_worker(processor:ProcessJob):
             continue
         for stream, messages in response:
             for message_id, message in messages:
-                job_string = message['job']
-                job_dict = json.loads(job_string)
-                # print(job_dict)
-                
-                processor.process_job(job_dict)
+                try:
+                    job_string = message['job']
+                    job_dict = json.loads(job_string)
+                    # print(job_dict)
+                    
+                    processor.process_job(job_dict)
+                    await redis_client.xack(
+                        STREAM,
+                        GROUP,
+                        message_id
+                    )
+                except Exception as e:
+                    print(f"Job failed: {e}")
+
 
 if __name__ == "__main__":
     import sys

@@ -5,8 +5,8 @@ from shared_lib.core.constants import UPLOAD_DIR
 from shared_lib.models import Document
 from app.middleware.auth import get_current_user
 import uuid
-from shared_lib.infra.queue import ingest
-from pathlib import Path
+from shared_lib.infra.queue import ingest,delete_document
+from datetime import datetime,timezone
 from sqlalchemy.orm import Session
 from shared_lib.pydantic_models.models import JobData
 from shared_lib.qdrant.vector_store import QdrantVectorService
@@ -130,8 +130,9 @@ def get_document(
         "uploaded_at": document.created_at,
     }
 
+
 @router.delete("/{document_id}")
-def delete_document(
+async def delete_document(
     document_id: str,
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -152,8 +153,14 @@ def delete_document(
         )
 
     document.is_deleted = True
-    qdrant.delete_vectors(doc_id=document_id)
+    document.deleted_at = datetime.now(timezone.utc)
     db.commit()
+    await delete_document(
+        {
+            "document_id": str(document.id),
+            "file_path": document.file_path,
+        }
+    )
 
     return {
         "message": "Document deleted successfully"
