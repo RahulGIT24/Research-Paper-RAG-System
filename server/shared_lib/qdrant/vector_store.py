@@ -95,7 +95,7 @@ class QdrantVectorService:
             points_selector=Filter(
                 must=[
                     FieldCondition(
-                        key="doc_od",
+                        key="doc_id",
                         match=MatchValue(value=str(doc_id))
                     )
                 ]

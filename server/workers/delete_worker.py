@@ -2,6 +2,7 @@ import asyncio
 from pathlib import Path
 from shared_lib.infra.redis import redis_client
 from shared_lib.db.session import SessionLocal
+import json
 from shared_lib.models import Document
 from shared_lib.qdrant.vector_store import QdrantVectorService
 
@@ -12,9 +13,7 @@ GROUP_NAME = "rag-delete-workers"
 CONSUMER_NAME = "delete-worker-1"
 
 
-async def process_delete_job(fields: dict):
-    document_id = fields["document_id"]
-    file_path = fields["file_path"]
+async def process_delete_job(document_id: str,file_path:str):
 
     db = SessionLocal()
 
@@ -40,6 +39,8 @@ async def process_delete_job(fields: dict):
         print(
             f"Delete completed for document {document_id}"
         )
+        db.commit()
+        db.flush()
 
     except Exception as e:
         db.rollback()
@@ -73,7 +74,8 @@ async def consume_delete_jobs():
             for stream_name, entries in messages:
                 for message_id, fields in entries:
                     try:
-                        await process_delete_job(fields)
+                        job = json.loads(fields['job'])
+                        await process_delete_job(job['document_id'],job['file_path'])
 
                         await redis_client.xack(
                             STREAM_NAME,

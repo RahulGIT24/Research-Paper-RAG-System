@@ -132,7 +132,7 @@ def get_document(
 
 
 @router.delete("/{document_id}")
-async def delete_document(
+async def delete_document_api(
     document_id: str,
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -141,7 +141,8 @@ async def delete_document(
         db.query(Document)
         .filter(
             Document.id == document_id,
-            Document.uploaded_by == str(current_user["id"])
+            Document.uploaded_by == str(current_user["id"]),
+            Document.deleted == False
         )
         .first()
     )
@@ -152,7 +153,7 @@ async def delete_document(
             message="Document not found"
         )
 
-    document.is_deleted = True
+    # document.deleted = True
     document.deleted_at = datetime.now(timezone.utc)
     db.commit()
     await delete_document(
