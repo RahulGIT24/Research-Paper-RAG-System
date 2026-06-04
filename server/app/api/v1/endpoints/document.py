@@ -53,8 +53,6 @@ async def upload(file:UploadFile,current_user=Depends(get_current_user),db:Sessi
             return {
                 "message": "Document Submitted for processing",
             }
-        except BaseAPIException:
-            raise BaseAPIException
         except Exception as e:
             db.rollback()
             raise BaseAPIException(message="Internal Server Error",status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -102,7 +100,7 @@ def get_documents(
 
 @router.get("/{document_id}")
 def get_document(
-    document_id: str,
+    document_id: uuid.UUID,
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -133,7 +131,7 @@ def get_document(
 
 @router.delete("/{document_id}")
 async def delete_document_api(
-    document_id: str,
+    document_id: uuid.UUID,
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
