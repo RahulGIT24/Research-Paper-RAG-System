@@ -50,6 +50,12 @@ export default function TopNav() {
                     </div>
 
                     <button
+                        onClick={()=>router.push("/dashboard/query")}
+                        className="px-6 py-2 rounded-xl font-bold text-blue-500 bg-slate-200 shadow-[6px_6px_12px_#c1c9d2,-6px_-6px_12px_#ffffff] hover:shadow-[inset_4px_4px_8px_#c1c9d2,inset_-4px_-4px_8px_#ffffff] active:shadow-[inset_6px_6px_12px_#c1c9d2,inset_-6px_-6px_12px_#ffffff] transition-all duration-300"
+                    >
+                        Query
+                    </button>
+                    <button
                         onClick={handleLogout}
                         className="px-6 py-2 rounded-xl font-bold text-red-500 bg-slate-200 shadow-[6px_6px_12px_#c1c9d2,-6px_-6px_12px_#ffffff] hover:shadow-[inset_4px_4px_8px_#c1c9d2,inset_-4px_-4px_8px_#ffffff] active:shadow-[inset_6px_6px_12px_#c1c9d2,inset_-6px_-6px_12px_#ffffff] transition-all duration-300"
                     >

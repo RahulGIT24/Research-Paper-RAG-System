@@ -211,7 +211,7 @@ export default function DashboardPage() {
                                             disabled={!canDelete}
                                             title={!canDelete ? "Document must finish processing to delete" : "Delete document"}
                                             className={`px-4 py-2 rounded-lg font-bold transition-all duration-300
-                        ${canDelete
+                                            ${canDelete
                                                     ? "text-red-500 bg-slate-200 shadow-[4px_4px_8px_#c1c9d2,-4px_-4px_8px_#ffffff] hover:shadow-[inset_2px_2px_4px_#c1c9d2,inset_-2px_-2px_4px_#ffffff]"
                                                     : "text-slate-400 bg-slate-200 shadow-[inset_2px_2px_4px_#c1c9d2,inset_-2px_-2px_4px_#ffffff] opacity-60 cursor-not-allowed"
                                                 }`}

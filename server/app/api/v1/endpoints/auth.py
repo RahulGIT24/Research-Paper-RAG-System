@@ -7,9 +7,12 @@ from shared_lib.core.exceptions import BaseAPIException
 import bcrypt
 import jwt
 from datetime import datetime, timedelta
+from shared_lib.pydantic_models.models import EmailJob
 from jwt.exceptions import ExpiredSignatureError, InvalidSignatureError, InvalidTokenError
 from shared_lib.core.config import settings
+from shared_lib.infra.queue import send_email
 from app.middleware.auth import get_current_user
+from jwt import ExpiredSignatureError, InvalidTokenError
 
 router = APIRouter()
 
@@ -26,7 +29,7 @@ def generate_token(type:str,time=15,**kwargs):
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
 @router.post("/signup",status_code=status.HTTP_201_CREATED)
-def signup(user:SignUp,db:Session = Depends(get_db)):
+async def signup(user:SignUp,db:Session = Depends(get_db)):
     existing_user = db.query(User).filter(User.email == user.email).first()
     if existing_user is not None:
         raise BaseAPIException(status_code=status.HTTP_409_CONFLICT,message="User already exists")
@@ -38,7 +41,12 @@ def signup(user:SignUp,db:Session = Depends(get_db)):
         db.add(new_user)
         db.commit()
         db.refresh(new_user)
-        #* signup email pending
+        job_payload:EmailJob = {
+            "email_address":user.email,
+            "type":'verification',
+            "token":token
+        }
+        await send_email(job_payload)
     except Exception as e:
         print(e)
         db.rollback()
@@ -53,7 +61,7 @@ def signup(user:SignUp,db:Session = Depends(get_db)):
         }
 
 @router.post("/signin", status_code=status.HTTP_200_OK)
-def signin(user: Login, response:Response, db: Session = Depends(get_db)):
+async def signin(user: Login, response:Response, db: Session = Depends(get_db)):
     existing_user = (
         db.query(User)
         .filter(User.email == user.email)
@@ -74,6 +82,25 @@ def signin(user: Login, response:Response, db: Session = Depends(get_db)):
                 message="Invalid Credentials"
             )
         if not existing_user.is_verified:
+            existing_token = existing_user.verification_token
+
+            if existing_token:
+                try:
+                    jwt.decode(
+                        existing_token,
+                        SECRET_KEY,
+                        algorithms=[ALGORITHM]
+                    )
+
+                    return {
+                        "message": "Verification email already sent. Please check your inbox."
+                    }
+
+                except ExpiredSignatureError:
+                    pass
+
+                except InvalidTokenError:
+                    pass
             token = generate_token(
                 "verification",
                 time=15,
@@ -82,7 +109,12 @@ def signin(user: Login, response:Response, db: Session = Depends(get_db)):
             existing_user.verification_token = token
             db.commit()
             db.refresh(existing_user)
-            # TODO: send verification email
+            job_payload:EmailJob = {
+                "email_address":user.email,
+                "type":'verification',
+                "token":token
+            }
+            await send_email(job_payload)
             return {
                 "message": "User not verified, verification email sent"
             }

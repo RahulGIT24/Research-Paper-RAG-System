@@ -4,9 +4,7 @@ from shared_lib.infra.redis import redis_client
 import json
 from .process_job import ProcessJob
 import asyncio
-from shared_lib.db.session import get_db
 from shared_lib.qdrant.vector_store import QdrantVectorService
-from shared_lib.core.config import settings
 from shared_lib.db.session import SessionLocal
 
 # should be run as a module in terminal

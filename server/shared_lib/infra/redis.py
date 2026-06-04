@@ -28,5 +28,16 @@ class RedisClient:
             if "BUSYGROUP" not in str(e):
                 raise
 
+        try:
+            await self.client.xgroup_create(
+                "rag:sendmail-jobs",
+                "rag-sendmail-workers",
+                id="0",
+                mkstream=True
+            )
+        except ResponseError as e:
+            if "BUSYGROUP" not in str(e):
+                raise
+
 redis_instance = RedisClient()
 redis_client = redis_instance.client 

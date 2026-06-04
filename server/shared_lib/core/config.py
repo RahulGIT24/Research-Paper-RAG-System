@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     QDRANT_COLLECTION:str
     LLM_API:str
     LLM_MODEL:str
+    SMTP_USERNAME:str
+    SMTP_PASSWORD:str
+    CLIENT_URL:str
 
     class Config:
         env_file = ".env"

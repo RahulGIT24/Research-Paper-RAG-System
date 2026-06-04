@@ -3,6 +3,7 @@ from shared_lib.core.exceptions import BaseAPIException
 from shared_lib.db.session import get_db
 from shared_lib.core.constants import UPLOAD_DIR
 from shared_lib.models import Document
+from fastapi.responses import FileResponse
 from app.middleware.auth import get_current_user
 import uuid
 from shared_lib.infra.queue import ingest,delete_document
@@ -165,3 +166,31 @@ async def delete_document_api(
     return {
         "message": "Document deleted successfully"
     }
+
+@router.get("/{document_id}/view")
+def view_document(
+    document_id: uuid.UUID,
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    document = (
+        db.query(Document)
+        .filter(
+            Document.id == document_id,
+            Document.uploaded_by == str(current_user["id"]),
+            Document.deleted == False
+        )
+        .first()
+    )
+
+    if not document:
+        raise BaseAPIException(
+            status_code=404,
+            message="Document not found"
+        )
+
+    return FileResponse(
+        path=document.file_path,
+        media_type="application/pdf",
+        filename=document.original_name
+    )

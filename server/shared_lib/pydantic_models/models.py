@@ -26,3 +26,9 @@ class JobData(BaseModel):
 class DeleteJob(BaseModel):
     document_id: str
     file_path: str
+
+from typing import Literal
+class EmailJob(BaseModel):
+    email_address: str
+    token: str
+    type:Literal["forgot-password","verification"]
