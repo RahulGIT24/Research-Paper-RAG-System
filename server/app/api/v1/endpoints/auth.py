@@ -9,6 +9,7 @@ import jwt
 from datetime import datetime, timedelta
 from jwt.exceptions import ExpiredSignatureError, InvalidSignatureError, InvalidTokenError
 from shared_lib.core.config import settings
+from app.middleware.auth import get_current_user
 
 router = APIRouter()
 
@@ -100,7 +101,7 @@ def signin(user: Login, response:Response, db: Session = Depends(get_db)):
             value=access_token,
             httponly=True,
             secure=True,
-            samesite="lax",
+            samesite="none",
             max_age=15 * 60
         )
         response.set_cookie(
@@ -108,7 +109,7 @@ def signin(user: Login, response:Response, db: Session = Depends(get_db)):
             value=refresh_token,
             httponly=True,
             secure=True,
-            samesite="lax",
+            samesite="none",
             max_age=7 * 24 * 60 * 60
         )
         return {
@@ -224,16 +225,16 @@ def refresh_access_token(
             key="access_token",
             value=new_access_token,
             httponly=True,
-            secure=False,  
-            samesite="lax",
+            secure=True,  
+            samesite="none",
             max_age=15 * 60
         )
         response.set_cookie(
             key="refresh_token",
             value=new_refresh_token,
             httponly=True,
-            secure=False,  
-            samesite="lax",
+            secure=True,  
+            samesite="none",
             max_age=7 * 24 * 60 * 60
         )
         return {
@@ -362,3 +363,27 @@ def reset_password(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             message="An error occurred while resetting password"
         )
+
+@router.post("/logout")
+def logout(
+    response: Response, 
+    current_user = Depends(get_current_user)
+):
+    """
+    Logs out the user by clearing the authentication cookies.
+    """
+    response.delete_cookie(
+        key="access_token",
+        httponly=True,
+        secure=True,  
+        samesite="none" 
+    )
+
+    response.delete_cookie(
+        key="refresh_token",
+        httponly=True,
+        secure=True,
+        samesite="none" 
+    )
+
+    return {"message": "Logged out successfully"}

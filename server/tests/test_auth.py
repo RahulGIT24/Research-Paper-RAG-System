@@ -456,3 +456,33 @@ def test_reset_password_user_not_found():
     )
 
     assert response.status_code == 404
+
+# =========================================================
+# LOGOUT USER TESTS
+# =========================================================
+def get_authenticated_user():
+    email, _ = create_user()
+
+    verify_token = jwt.encode(
+        {
+            "email": email,
+            "type": "verification",
+            "exp": datetime.utcnow() + timedelta(minutes=15)
+        },
+        SECRET_KEY,
+        algorithm=ALGORITHM
+    )
+
+    client.get(f"/api/v1/auth/verify?token={verify_token}")
+
+    signin = client.post(
+        "/api/v1/auth/signin",
+        json={"email": email, "password": "StrongPassword123"}
+    )
+    return {"access_token":signin.cookies.get("access_token")}
+
+def test_get_documents():
+    cookies = get_authenticated_user()
+    response = client.post("/api/v1/auth/logout",cookies=cookies)
+
+    assert response.status_code == 200

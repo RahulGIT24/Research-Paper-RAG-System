@@ -1,6 +1,6 @@
 from io import BytesIO
 from app.api.v1.endpoints.auth import SECRET_KEY, ALGORITHM
-from .test_auth import create_user
+from .test_auth import create_user,get_authenticated_user
 from .test_client import client
 import jwt
 from datetime import datetime, timedelta
@@ -11,27 +11,6 @@ def auth_headers(token: str):
     return {
         "Authorization": f"Bearer {token}"
     }
-
-def get_authenticated_user():
-    email, _ = create_user()
-
-    verify_token = jwt.encode(
-        {
-            "email": email,
-            "type": "verification",
-            "exp": datetime.utcnow() + timedelta(minutes=15)
-        },
-        SECRET_KEY,
-        algorithm=ALGORITHM
-    )
-
-    client.get(f"/api/v1/auth/verify?token={verify_token}")
-
-    signin = client.post(
-        "/api/v1/auth/signin",
-        json={"email": email, "password": "StrongPassword123"}
-    )
-    return {"access_token":signin.cookies.get("access_token")}
 
 def test_upload_pdf_success():
     email, _ = create_user()

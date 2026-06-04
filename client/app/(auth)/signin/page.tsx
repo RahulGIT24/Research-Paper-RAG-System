@@ -19,12 +19,14 @@ export default function SignInPage() {
 
         const formData = new FormData(e.currentTarget);
         const data = Object.fromEntries(formData.entries());
-        console.log(process.env);
 
         try {
             const res = await axios.post(
                 `${process.env.NEXT_PUBLIC_API_URL}/auth/signin`,
                 data,
+                {
+                    withCredentials: true
+                }
             );
 
             if (res.data.message === "User not verified, verification email sent") {
@@ -35,6 +37,7 @@ export default function SignInPage() {
                 router.push("/dashboard");
             }
         } catch (err) {
+            console.log(err)
             if (axios.isAxiosError(err)) {
                 setError(err.response?.data?.error || "Failed to process request");
             } else if (err instanceof Error) {

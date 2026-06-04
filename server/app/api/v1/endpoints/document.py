@@ -93,6 +93,7 @@ def get_documents(
                 "file_name": doc.original_name,
                 "file_ext": doc.file_ext,
                 "uploaded_at": doc.created_at,
+                "status":doc.status
             }
             for doc in documents
         ]
@@ -140,7 +141,7 @@ async def delete_document_api(
         .filter(
             Document.id == document_id,
             Document.uploaded_by == str(current_user["id"]),
-            Document.deleted == False
+            Document.deleted == False,
         )
         .first()
     )
