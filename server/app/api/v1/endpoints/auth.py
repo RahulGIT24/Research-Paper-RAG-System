@@ -292,7 +292,7 @@ def refresh_access_token(
         )
 
 @router.post("/forgot-password", status_code=status.HTTP_200_OK)
-def forgot_password(
+async def forgot_password(
     data: ForgotPasswordRequest,
     db: Session = Depends(get_db)
 ):
@@ -315,8 +315,12 @@ def forgot_password(
         existing_user.forgot_password_token = forgot_password_token
         db.commit()
         db.refresh(existing_user)
-        # TODO:
-        # send forgot password email here
+        job_payload:EmailJob = {
+                "email_address":existing_user.email,
+                "type":'forgot-password',
+                "token":forgot_password_token
+        }
+        await send_email(job_payload)
         return {
             "message": "Forgot password email sent successfully"
         }

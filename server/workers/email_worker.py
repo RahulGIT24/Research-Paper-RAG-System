@@ -1,7 +1,7 @@
 from shared_lib.infra.redis import redis_client
 import json
 from shared_lib.pydantic_models.models import EmailJob
-from shared_lib.Email import VerificationEmail,SMTPEmailSender
+from shared_lib.Email import VerificationEmail,SMTPEmailSender,ForgotPasswordEmail
 
 STREAM = "rag:sendmail-jobs"
 GROUP = "rag-sendmail-workers"
@@ -36,11 +36,12 @@ async def consume_email_jobs():
                         
 
                         if(type == 'forgot-password'):
-                            pass
+                            email = ForgotPasswordEmail(token)
                         
                         if(type == 'verification'):
                             email = VerificationEmail(token)
-                            sender.send(email_template=email,recipient=email_address)
+                        
+                        sender.send(email_template=email,recipient=email_address)
 
                         # processor.process_job(job_dict)
                         await redis_client.xack(
