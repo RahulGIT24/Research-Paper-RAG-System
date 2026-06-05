@@ -47,7 +47,8 @@ async def upload(file:UploadFile,current_user=Depends(get_current_user),db:Sessi
                 "filepath":new_document.file_path,
                 "uploaded_by":str(current_user['id']),
                 "status":"uploaded",
-                "ext":new_document.file_ext
+                "ext":new_document.file_ext,
+                "filename":new_document.original_name
             }
             await ingest(job_payload)
 

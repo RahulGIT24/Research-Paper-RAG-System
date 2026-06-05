@@ -25,7 +25,7 @@ def query_documents(req:SearchRequest,current_user=Depends(get_current_user)):
         search_results = qdrant.query(query_embedding=embeddings,user_id=user_id,limit=10)
         print(search_results)
         context = "\n\n".join([
-                f"[Source {i+1} | page {r.get('page')} | file {r.get('file_path')}]\n{r.get('text','')}"
+                f"[Source {i+1} | page {r.get('page')} | filepath {r.get('file_path')} | filename {r.get('file_name')}]\n{r.get('text','')}"
             for i, r in enumerate(search_results)
         ])
         # print(context)

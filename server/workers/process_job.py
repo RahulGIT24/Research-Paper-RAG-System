@@ -15,11 +15,12 @@ class ProcessJob:
         doc_id = data['id']
         user_id = data['uploaded_by']
         ext = data['ext']
+        filename = data['filename']
         if ext == 'pdf':
             with self.session_factory() as db:
-                self._process_pdf(data['filepath'],doc_id,user_id,db)
+                self._process_pdf(data['filepath'],doc_id,user_id,db,filename)
 
-    def _process_pdf(self, filepath: str,doc_id,user_id,db):
+    def _process_pdf(self, filepath: str,doc_id,user_id,db,filename:str):
         pdf = PyMuPDFLoader(file_path=filepath)
         docs = pdf.load()
         db.query(Document).filter(
@@ -45,7 +46,8 @@ class ProcessJob:
                 "metadata":{
                     "page":node.metadata.get("page"),
                     "file_path":filepath,
-                    "source":"upload"
+                    "source":"upload",
+                    "file_name":filename
                 }
             }
             for node in nodes
