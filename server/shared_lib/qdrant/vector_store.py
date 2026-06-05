@@ -86,7 +86,8 @@ class QdrantVectorService:
                 "score": point.score,
                 "text": point.payload.get("text"),
                 "source": point.payload.get("source"),
-                "page": point.payload.get("page")
+                "page": point.payload.get("page"),
+                "file_path": point.payload.get("file_path"),
             })
         return results
     
