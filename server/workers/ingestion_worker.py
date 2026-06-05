@@ -46,7 +46,7 @@ async def run_worker(processor:ProcessJob):
 if __name__ == "__main__":
     import sys
     try:
-        splitter = SemanticChunker()
+        splitter = SemanticChunker().get_semantic_splitter()
 
         qdrant = QdrantVectorService()
 

@@ -22,7 +22,7 @@ def query_documents(req:SearchRequest,current_user=Depends(get_current_user)):
     try:
         embeddings = text_embedding_model.get_text_embedding(req.query)
         user_id = current_user['id']
-        search_results = qdrant.query(query_embedding=embeddings,user_id=user_id,limit=8)
+        search_results = qdrant.query(query_embedding=embeddings,user_id=user_id,limit=5)
         context = "\n\n".join([
                 f"[Source {i+1} | page {r.get('page')} | file {r.get('source')}]\n{r.get('text','')}"
             for i, r in enumerate(search_results)

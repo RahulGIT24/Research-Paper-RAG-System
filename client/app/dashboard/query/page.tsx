@@ -54,6 +54,7 @@ export default function QueryPage() {
                     setAnswer((prev) => prev + chunk);
                 }
             }
+            setQuery("")
         } catch (err) {
             if (axios.isAxiosError(err)) {
                 setError(err.message || "An unexpected error occurred.");

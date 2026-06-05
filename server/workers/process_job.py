@@ -1,16 +1,13 @@
 from shared_lib.pydantic_models.models import JobData
-from sqlalchemy.orm import Session
 from langchain_community.document_loaders import PyMuPDFLoader
-from shared_lib.chunking.SemanticChunker import SemanticChunker
-from shared_lib.chunking.DocumentGenerator import DocumentGenerator
 from shared_lib.models import Document
+from llama_index.core import Document as LlamaDocument
 
 class ProcessJob:
 
     def __init__(self,redis_client,splitter,qdrant_service,session_factory):
         self.redis_client=redis_client
         self.splitter = splitter
-        self.splitter = SemanticChunker.get_semantic_splitter()
         self.qdrant_service = qdrant_service
         self.session_factory = session_factory
 
@@ -32,18 +29,37 @@ class ProcessJob:
         })
         db.commit()
         print("Status Updated")
-        llama_docs = DocumentGenerator.generate_docs(docs,filepath)
+
+        #convert to llama index docs
+        llama_docs = [
+            LlamaDocument(text=d.page_content, metadata={"page":i})
+            for i,d in enumerate(docs)
+        ]
+
+        nodes = self.splitter.get_nodes_from_documents(llama_docs)
+        # print(nodes)
+
+        llama_docs = [
+            {
+                "text":node.get_content(),
+                "metadata":{
+                    "page":node.metadata.get("page"),
+                    "file_path":filepath,
+                    "source":"upload"
+                }
+            }
+            for node in nodes
+        ]
+
         self.qdrant_service.ingest_documents(llama_docs,user_id,doc_id)
         print("Ingested Successfully")
+
         db.query(Document).filter(
             Document.id == doc_id
         ).update({
             "status": "embedded",
         })
         db.commit()
-
-        # nodes = self.splitter.get_nodes_from_documents(llama_docs)
-        # print(f"Generated {len(chunks)} chunks")
     
     def _process_excel():
         pass

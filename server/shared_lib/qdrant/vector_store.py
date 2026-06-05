@@ -24,15 +24,16 @@ class QdrantVectorService:
 
     def ingest_documents(
         self,
-        documents: List[Document],
+        documents: any,
         user_id:str,
         doc_id:str
     ) -> bool:
+        # [{'text': 'My name is rahul', 'metadata': {'page': 0}}]
 
         if not documents:
             return True
 
-        texts = [doc.text for doc in documents]
+        texts = [doc['text'] for doc in documents]
 
         vectors = self.embed_model.get_text_embedding_batch(
             texts
@@ -43,10 +44,10 @@ class QdrantVectorService:
                 id=str(uuid.uuid4()),
                 vector=vector,
                 payload={
-                    "text": doc.text,
-                    "page": doc.metadata.get("page"),
-                    "source": doc.metadata.get("source"),
-                    "file_path": doc.metadata.get("file_path"),
+                    "text": doc['text'],
+                    "page": doc['metadata'].get("page"),
+                    "source": doc['metadata'].get("source"),
+                    "file_path": doc['metadata'].get("file_path"),
                     "user_id":user_id,
                     "doc_id":doc_id
                 },
