@@ -18,6 +18,7 @@ class ResetPasswordRequest(BaseModel):
 
 class JobData(BaseModel):
     id:str
+    server_file_name:str
     filepath:str
     uploaded_by:str
     status:str

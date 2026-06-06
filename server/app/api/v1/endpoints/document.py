@@ -10,6 +10,7 @@ from shared_lib.infra.queue import ingest,delete_document
 from datetime import datetime,timezone
 from sqlalchemy.orm import Session
 from shared_lib.pydantic_models.models import JobData
+import os
 from shared_lib.qdrant.vector_store import QdrantVectorService
 import shutil
 
@@ -44,6 +45,7 @@ async def upload(file:UploadFile,current_user=Depends(get_current_user),db:Sessi
 
             job_payload:JobData = {
                 "id":str(new_doc_id),
+                "server_file_name":new_document.file_name,
                 "filepath":new_document.file_path,
                 "uploaded_by":str(current_user['id']),
                 "status":"uploaded",
@@ -92,7 +94,8 @@ def get_documents(
         "documents": [
             {
                 "id": str(doc.id),
-                "file_name": doc.original_name,
+                "server_file_name": doc.file_name,
+                "original_file_name": doc.original_name,
                 "file_ext": doc.file_ext,
                 "uploaded_at": doc.created_at,
                 "status":doc.status
@@ -168,30 +171,24 @@ async def delete_document_api(
         "message": "Document deleted successfully"
     }
 
-@router.get("/{document_id}/view")
-def view_document(
-    document_id: uuid.UUID,
+@router.get("/view/{filename}")
+async def view_uploaded_document(
+    filename: str,
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db)
-):
+    ):
     document = (
         db.query(Document)
         .filter(
-            Document.id == document_id,
+            Document.file_name == filename,
             Document.uploaded_by == str(current_user["id"]),
-            Document.deleted == False
+            Document.deleted == False,
         )
         .first()
     )
-
     if not document:
-        raise BaseAPIException(
-            status_code=404,
-            message="Document not found"
-        )
-
-    return FileResponse(
-        path=document.file_path,
-        media_type="application/pdf",
-        filename=document.original_name
-    )
+        raise BaseAPIException(status_code=404,message="Document not found")
+    file_path = os.path.join("uploads", filename)
+    if not os.path.exists(file_path):
+        raise BaseAPIException(status_code=404, message="File not found")
+    return FileResponse(file_path)

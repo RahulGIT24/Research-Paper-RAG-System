@@ -2,12 +2,14 @@
 
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
+import toast from "react-hot-toast";
 
 type DocStatus = "uploaded" | "processing" | "embedded" | "failed";
 
 interface Document {
     id: string;
-    file_name: string;
+    original_file_name: string;
+    server_file_name: string;
     file_ext: string;
     uploaded_at: string;
     status: DocStatus;
@@ -131,6 +133,22 @@ export default function DashboardPage() {
         }
     };
 
+    const openDocumentFile = async (file_name: string) => {
+        try {
+            const res = await axios.get(process.env.NEXT_PUBLIC_API_URL + "/document/view/" + file_name, {
+                responseType: "blob",
+                withCredentials: true
+            });
+            const blob = new Blob([res.data], { type: "application/pdf" });
+            const url = URL.createObjectURL(blob);
+
+            const newTab = window.open();
+            if (newTab) newTab.location = url;
+        } catch (error) {
+            toast.error("Error while opening file")
+        }
+    }
+
     return (
         <div className="flex flex-col space-y-10">
 
@@ -176,10 +194,11 @@ export default function DashboardPage() {
                                 <div
                                     key={doc.id}
                                     className="flex items-center justify-between p-5 rounded-2xl bg-slate-200 shadow-[6px_6px_12px_#c1c9d2,-6px_-6px_12px_#ffffff]"
+
                                 >
                                     <div className="flex flex-col">
-                                        <span className="font-semibold text-slate-700 truncate max-w-md">
-                                            {doc.file_name}
+                                        <span className="font-semibold cursor-pointer hover:text-blue-500 text-slate-700 truncate max-w-md" onClick={() => { openDocumentFile(doc.server_file_name) }}>
+                                            {doc.original_file_name}
                                         </span>
                                         <div className="flex items-center space-x-4 mt-2">
                                             <span className="text-xs font-medium text-slate-500">
@@ -200,14 +219,20 @@ export default function DashboardPage() {
                                         {doc.status === "embedded" && (
                                             <button
                                                 className="px-4 py-2 rounded-lg font-bold text-blue-600 bg-slate-200 shadow-[4px_4px_8px_#c1c9d2,-4px_-4px_8px_#ffffff] hover:shadow-[inset_2px_2px_4px_#c1c9d2,inset_-2px_-2px_4px_#ffffff] transition-all duration-300"
-                                                onClick={() => alert("Chat functionality coming soon!")}
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    alert("Chat functionality coming soon!")
+                                                }}
                                             >
                                                 Query
                                             </button>
                                         )}
 
                                         <button
-                                            onClick={() => handleDelete(doc.id)}
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                handleDelete(doc.id)
+                                            }}
                                             disabled={!canDelete}
                                             title={!canDelete ? "Document must finish processing to delete" : "Delete document"}
                                             className={`px-4 py-2 rounded-lg font-bold transition-all duration-300

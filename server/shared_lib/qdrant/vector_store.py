@@ -47,7 +47,7 @@ class QdrantVectorService:
                     "text": doc['text'],
                     "page": doc['metadata'].get("page"),
                     "source": doc['metadata'].get("source"),
-                    "file_path": doc['metadata'].get("file_path"),
+                    "server_file_name": doc['metadata'].get("server_file_name"),
                     "file_name": doc['metadata'].get("file_name"),
                     "user_id":user_id,
                     "doc_id":doc_id
@@ -88,8 +88,8 @@ class QdrantVectorService:
                 "text": point.payload.get("text"),
                 "source": point.payload.get("source"),
                 "page": point.payload.get("page"),
-                "file_path": point.payload.get("file_path"),
                 "file_name": point.payload.get("file_name"),
+                "server_file_name": point.payload.get("server_file_name"),
             })
         return results
     

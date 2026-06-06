@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from shared_lib.qdrant.vector_store import QdrantVectorService
 from app.lib.llm import LLM
 from fastapi.responses import StreamingResponse
+from shared_lib.core.config import settings
 
 class SearchRequest(BaseModel):
     query: str
@@ -22,12 +23,12 @@ def query_documents(req:SearchRequest,current_user=Depends(get_current_user)):
     try:
         embeddings = text_embedding_model.get_text_embedding(req.query)
         user_id = current_user['id']
-        search_results = qdrant.query(query_embedding=embeddings,user_id=user_id,limit=10)
-        print(search_results)
+        search_results = qdrant.query(query_embedding=embeddings,user_id=user_id,limit=5)
         context = "\n\n".join([
-                f"[Source {i+1} | page {r.get('page')} | filepath {r.get('file_path')} | filename {r.get('file_name')}]\n{r.get('text','')}"
+            f"[Source {i+1} | page {r.get('page')} | access_url {settings.SERVER_URL}/document/view/{r.get('server_file_name')} | filename {r.get('file_name')}]\n{r.get('text', '')}"
             for i, r in enumerate(search_results)
         ])
+        
         # print(context)
         messages = llm_layer.get_messages(context=context,query=req.query)
         llm_client = llm_layer.get_llm()

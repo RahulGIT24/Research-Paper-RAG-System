@@ -15,12 +15,13 @@ class ProcessJob:
         doc_id = data['id']
         user_id = data['uploaded_by']
         ext = data['ext']
+        server_file_name = data['server_file_name']
         filename = data['filename']
         if ext == 'pdf':
             with self.session_factory() as db:
-                self._process_pdf(data['filepath'],doc_id,user_id,db,filename)
+                self._process_pdf(data['filepath'],doc_id,user_id,db,filename,server_file_name)
 
-    def _process_pdf(self, filepath: str,doc_id,user_id,db,filename:str):
+    def _process_pdf(self, filepath: str,doc_id,user_id,db,filename:str,server_file_name):
         pdf = PyMuPDFLoader(file_path=filepath)
         docs = pdf.load()
         db.query(Document).filter(
@@ -45,7 +46,7 @@ class ProcessJob:
                 "text":node.get_content(),
                 "metadata":{
                     "page":node.metadata.get("page"),
-                    "file_path":filepath,
+                    "server_file_name":server_file_name,
                     "source":"upload",
                     "file_name":filename
                 }
@@ -62,9 +63,6 @@ class ProcessJob:
             "status": "embedded",
         })
         db.commit()
-    
-    def _process_excel():
-        pass
 
-    def _process_txt_file():  
+    def _process_docx_file():  
         pass

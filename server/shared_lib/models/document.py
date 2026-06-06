@@ -17,7 +17,7 @@ class Document(Base):
     __tablename__ = 'documents'
 
     id = Column(UUID(as_uuid=True),primary_key=True,default=uuid.uuid4)
-    file_name = Column(String,nullable=False)
+    file_name = Column(String,nullable=False,index=True)
     file_path = Column(String,nullable=False)
     original_name = Column(String,nullable=False)
     created_at = Column(DateTime(timezone=True),default=datetime.now(timezone.utc))

@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     SMTP_USERNAME:str
     SMTP_PASSWORD:str
     CLIENT_URL:str
+    SERVER_URL:str
 
     class Config:
         env_file = ".env"
