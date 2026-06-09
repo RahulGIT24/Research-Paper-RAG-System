@@ -26,7 +26,9 @@ dependencies = [
     "pytest>=9.0.3",
     "python-dotenv>=1.2.2",
     "python-multipart>=0.0.29",
+    "rank-bm25>=0.2.2",
     "redis>=7.4.0",
+    "sentence-transformers>=5.5.1",
     "sqlalchemy>=2.0.50",
     "uvicorn>=0.48.0",
 ]

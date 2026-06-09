@@ -109,12 +109,15 @@ export default function QueryPage() {
         } finally {
             setIsStreaming(false);
             const result = sourcesPart.slice(0, -10);
-            console.log(JSON.parse(result.trim()))
+            // console.log(JSON.parse(result.trim()))
+            setSources(JSON.parse(result.trim()))
         }
     };
+
     const handleSourceClick = (source: Source) => {
         openDocumentFile(source.access_url);
     };
+
     return (
         <div className="flex flex-col h-[calc(100vh-140px)] space-y-6">
 
@@ -180,7 +183,7 @@ export default function QueryPage() {
                                                 <span className="text-xl">📄</span>
 
                                                 <div className="flex-1">
-                                                    <div className="font-medium text-slate-800 break-words">
+                                                    <div className="font-medium text-slate-800 wrap-break-word">
                                                         {source.file_name}
                                                     </div>
 
