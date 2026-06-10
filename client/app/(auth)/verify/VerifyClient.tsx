@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import axios from "axios";
+import { api } from "@/app/lib/api";
 
 export default function VerifyClient({ token }: { token: string }) {
   const [status, setStatus] = useState<"loading" | "success" | "error">(
@@ -17,8 +18,8 @@ export default function VerifyClient({ token }: { token: string }) {
 
     const verifyAccount = async () => {
       try {
-        const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/auth/verify`,
+        const res = await api.get(
+          `/auth/verify`,
           {
             params: { token },
           },

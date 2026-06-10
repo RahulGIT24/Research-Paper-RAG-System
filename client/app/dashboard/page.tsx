@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { api } from "../lib/api";
 
 type DocStatus = "uploaded" | "processing" | "embedded" | "failed";
 
@@ -34,7 +35,7 @@ export default function DashboardPage() {
     const fetchDocuments = async (page = 1) => {
         setLoading(true);
         try {
-            const res = await axios.get(process.env.NEXT_PUBLIC_API_URL + "/document/", {
+            const res = await api.get("/document/", {
                 params: { page, limit: 10 },
                 withCredentials: true
             });
@@ -89,7 +90,7 @@ export default function DashboardPage() {
         formData.append("file", file);
 
         try {
-            await axios.post(process.env.NEXT_PUBLIC_API_URL + "/document/upload", formData, {
+            await api.post("/document/upload", formData, {
                 headers: { "Content-Type": "multipart/form-data" },
                 withCredentials: true
             });
@@ -136,7 +137,7 @@ export default function DashboardPage() {
 
     const openDocumentFile = async (file_name: string) => {
         try {
-            const res = await axios.get(process.env.NEXT_PUBLIC_API_URL + "/document/view/" + file_name, {
+            const res = await api.get("/document/view/" + file_name, {
                 responseType: "blob",
                 withCredentials: true
             });

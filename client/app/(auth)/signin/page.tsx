@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import { api } from "@/app/lib/api";
 
 export default function SignInPage() {
     const router = useRouter();
@@ -21,8 +22,8 @@ export default function SignInPage() {
         const data = Object.fromEntries(formData.entries());
 
         try {
-            const res = await axios.post(
-                `${process.env.NEXT_PUBLIC_API_URL}/auth/signin`,
+            const res = await api.post(
+                `/auth/signin`,
                 data,
                 {
                     withCredentials: true

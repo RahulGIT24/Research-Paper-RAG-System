@@ -103,7 +103,7 @@ async def signin(user: Login, response:Response, db: Session = Depends(get_db)):
                     pass
             token = generate_token(
                 "verification",
-                time=15,
+                time=1,
                 email=existing_user.email
             )
             existing_user.verification_token = token
@@ -134,7 +134,6 @@ async def signin(user: Login, response:Response, db: Session = Depends(get_db)):
             httponly=True,
             secure=True,
             samesite="none",
-            max_age=15 * 60
         )
         response.set_cookie(
             key="refresh_token",
@@ -142,7 +141,6 @@ async def signin(user: Login, response:Response, db: Session = Depends(get_db)):
             httponly=True,
             secure=True,
             samesite="none",
-            max_age=7 * 24 * 60 * 60
         )
         return {
             "message": "Logged In Successfully"
@@ -259,7 +257,6 @@ def refresh_access_token(
             httponly=True,
             secure=True,  
             samesite="none",
-            max_age=15 * 60
         )
         response.set_cookie(
             key="refresh_token",
@@ -267,7 +264,6 @@ def refresh_access_token(
             httponly=True,
             secure=True,  
             samesite="none",
-            max_age=7 * 24 * 60 * 60
         )
         return {
             "message": "Tokens refreshed successfully"

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import { api } from "@/app/lib/api";
 
 export default function ResetClient({ token }: { token: string }) {
   const router = useRouter();
@@ -25,8 +26,8 @@ export default function ResetClient({ token }: { token: string }) {
     const new_password = formData.get("new_password");
 
     try {
-      const res = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/auth/reset-password`,
+      const res = await api.post(
+        `/auth/reset-password`,
         {
           token,
           new_password,

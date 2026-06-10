@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { api } from "../lib/api";
 
 interface UserProfile {
     name?: string;
@@ -18,7 +19,7 @@ export default function TopNav() {
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                const res = await axios.get(process.env.NEXT_PUBLIC_API_URL + "/user/", { withCredentials: true });
+                const res = await api.get("/user/", { withCredentials: true });
                 setUser(res.data);
             } catch (err) {
                 if (axios.isAxiosError(err) && err.response?.status === 401) {
@@ -31,7 +32,7 @@ export default function TopNav() {
 
     const handleLogout = async () => {
         try {
-            await axios.post(process.env.NEXT_PUBLIC_API_URL + "/auth/logout", {},{ withCredentials: true });
+            await api.post("/auth/logout", {},{ withCredentials: true });
             toast.success("Logged Out Successfully")
             router.push("/signin");
         } catch (err) {

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import axios from "axios";
+import { api } from "@/app/lib/api";
 
 export default function ForgotPasswordPage() {
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
@@ -16,7 +17,7 @@ export default function ForgotPasswordPage() {
     const email = formData.get("email");
 
     try {
-      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/forgot-password`, { email });
+      const res = await api.post(`/auth/forgot-password`, { email });
 
       setStatus("success");
       setMessage(res.data.message || "Forgot password email sent successfully");

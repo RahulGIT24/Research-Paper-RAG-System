@@ -60,6 +60,6 @@ def get_current_user(
         )
     except InvalidTokenError:
         raise BaseAPIException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
+            status_code=status.HTTP_403_FORBIDDEN,
             message="Invalid token"
         )
