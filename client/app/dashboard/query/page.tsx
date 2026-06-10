@@ -6,6 +6,7 @@ import remarkGfm from "remark-gfm";
 import Link from "next/link";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { useSearchParams } from "next/navigation";
 
 interface Source {
     source_number: string; file_name: string; page_number: string; access_url: string
@@ -18,6 +19,7 @@ export default function QueryPage() {
     const [isStreaming, setIsStreaming] = useState(false);
     const [error, setError] = useState("");
     const chatContainerRef = useRef<HTMLDivElement>(null);
+    const searchParams = useSearchParams()
 
     const openDocumentFile = async (file_url: string) => {
         try {
@@ -49,6 +51,16 @@ export default function QueryPage() {
         setError("");
         setAnswer("");
         setSources([]);
+        const req_body:{
+            query:string,
+            doc_id?:string
+        } = {
+            query:query,
+        }
+
+        if(searchParams.get("document") != null){
+            req_body.doc_id = searchParams.get("document") as string
+        }
 
         try {
             const res = await fetch(
@@ -58,7 +70,7 @@ export default function QueryPage() {
                     headers: {
                         "Content-Type": "application/json",
                     },
-                    body: JSON.stringify({ query }),
+                    body: JSON.stringify(req_body),
                     credentials: "include",
                 }
             );

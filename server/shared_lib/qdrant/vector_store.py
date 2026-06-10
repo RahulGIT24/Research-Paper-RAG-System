@@ -3,6 +3,7 @@ import uuid
 
 from llama_index.core import Document
 from qdrant_client import QdrantClient
+from typing import Optional
 from qdrant_client.models import PointStruct
 from shared_lib.core.config import settings
 from qdrant_client.models import Filter, FieldCondition, MatchValue,SearchParams
@@ -64,18 +65,29 @@ class QdrantVectorService:
 
         return True
 
-    def query(self,query_embedding:List[float],user_id:str,limit:int=5):
+    def query(self,query_embedding:List[float],user_id:str,limit:int=5,doc_id:str | None = None):
+
+        match_conditions = [
+            FieldCondition(
+                key="user_id",
+                match=MatchValue(value=str(user_id))
+            )
+        ]
+
+        if doc_id is not None:
+            match_conditions.append(
+                FieldCondition(
+                    key="doc_id",
+                    match=MatchValue(value=str(doc_id))
+                )
+            )
+
         search_result = self.client.query_points(
             collection_name=settings.QDRANT_COLLECTION,
             query=query_embedding,
             limit=limit,
             query_filter=Filter(
-                must=[
-                    FieldCondition(
-                        key="user_id",
-                        match=MatchValue(value=str(user_id))
-                    )
-                ]
+                must=match_conditions
             ),
             search_params=SearchParams(hnsw_ef=128, exact=False),
             with_payload=True
@@ -92,7 +104,7 @@ class QdrantVectorService:
                 "server_file_name": point.payload.get("server_file_name"),
             })
         return results
-    
+
     def delete_vectors(self,doc_id:str):
         self.client.delete(
             collection_name=settings.QDRANT_COLLECTION,

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 type DocStatus = "uploaded" | "processing" | "embedded" | "failed";
 
@@ -149,6 +150,8 @@ export default function DashboardPage() {
         }
     }
 
+    const router = useRouter()
+
     return (
         <div className="flex flex-col space-y-10">
 
@@ -221,7 +224,7 @@ export default function DashboardPage() {
                                                 className="px-4 py-2 rounded-lg font-bold text-blue-600 bg-slate-200 shadow-[4px_4px_8px_#c1c9d2,-4px_-4px_8px_#ffffff] hover:shadow-[inset_2px_2px_4px_#c1c9d2,inset_-2px_-2px_4px_#ffffff] transition-all duration-300"
                                                 onClick={(e) => {
                                                     e.stopPropagation()
-                                                    alert("Chat functionality coming soon!")
+                                                    router.push(`/dashboard/query?document=${doc.id}`)
                                                 }}
                                             >
                                                 Query

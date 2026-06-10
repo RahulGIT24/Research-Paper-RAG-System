@@ -13,12 +13,13 @@ import re
 
 class SearchRequest(BaseModel):
     query: str
+    doc_id: str | None
 
 router = APIRouter()
 text_embedding_model = EmbedModel.get_embed_model()
 qdrant = QdrantVectorService()
 llm_layer = LLM()
-cross_encoder = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-2-v2", max_length=512)
+cross_encoder = CrossEncoder("BAAI/bge-reranker-base", max_length=512)
 
 def _tokenize(text: str) -> list[str]:
     return re.findall(r"[\w\-]+", text.lower())
@@ -59,8 +60,11 @@ def rerank(query: str, results: list[dict], final_top_n: int = 5) -> list[dict]:
 
 @router.post("/ask")
 def query_documents(req: SearchRequest, current_user=Depends(get_current_user)):
+    doc_id = None
     if not req.query:
         raise BaseAPIException(message="Please provide query", status_code=400)
+    if req.doc_id:
+        doc_id = req.doc_id
     try:
         embeddings   = text_embedding_model.get_text_embedding(req.query)
         user_id      = current_user["id"]
@@ -68,7 +72,8 @@ def query_documents(req: SearchRequest, current_user=Depends(get_current_user)):
         search_results = qdrant.query(
             query_embedding=embeddings,
             user_id=user_id,
-            limit=50
+            limit=50,
+            doc_id=doc_id
         )
 
         reranked = rerank(req.query, search_results, final_top_n=5)
