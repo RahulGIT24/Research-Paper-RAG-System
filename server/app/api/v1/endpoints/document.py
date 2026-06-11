@@ -37,8 +37,16 @@ async def upload(file:UploadFile,current_user=Depends(get_current_user),db:Sessi
                 message=f"Only {ext_allowed} files are accepted"
                 raise BaseAPIException(status_code=status.HTTP_400_BAD_REQUEST,message=message)
         file_hash = await get_file_hash(file)
-        file_path,file_name=save_file_to_disk(file)
         try:
+            already_exists = (db.query(Document).join(DocumentHash).filter(Document.uploaded_by == str(current_user["id"]),
+                            DocumentHash.hash_value == file_hash,
+                            Document.deleted == False)).first()
+            if already_exists:
+                raise BaseAPIException(
+                    status_code=400,
+                    message="You already uploaded this document"
+                )
+            file_path,file_name=save_file_to_disk(file)
             document_hash = db.query(DocumentHash).filter(
                 DocumentHash.hash_value == file_hash
             ).first()
@@ -77,7 +85,10 @@ async def upload(file:UploadFile,current_user=Depends(get_current_user),db:Sessi
             return {
                 "message": "Document Submitted for processing",
             }
+        except BaseAPIException:
+            raise
         except Exception as e:
+            print(e)
             db.rollback()
             raise BaseAPIException(message="Internal Server Error",status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
