@@ -1,6 +1,6 @@
 from shared_lib.pydantic_models.models import JobData
 from langchain_community.document_loaders import PyMuPDFLoader
-from shared_lib.models import Document
+from shared_lib.models import DocumentHash
 from llama_index.core import Document as LlamaDocument
 
 class ProcessJob:
@@ -16,16 +16,17 @@ class ProcessJob:
         user_id = data['uploaded_by']
         ext = data['ext']
         server_file_name = data['server_file_name']
+        document_hash_id = data['hash_id']
         filename = data['filename']
         if ext == 'pdf':
             with self.session_factory() as db:
-                self._process_pdf(data['filepath'],doc_id,user_id,db,filename,server_file_name)
+                self._process_pdf(data['filepath'],doc_id,user_id,db,filename,server_file_name,document_hash_id)
 
-    def _process_pdf(self, filepath: str,doc_id,user_id,db,filename:str,server_file_name):
+    def _process_pdf(self, filepath: str,doc_id,user_id,db,filename:str,server_file_name:str,document_hash_id:str):
         pdf = PyMuPDFLoader(file_path=filepath)
         docs = pdf.load()
-        db.query(Document).filter(
-            Document.id == doc_id
+        db.query(DocumentHash).filter(
+            DocumentHash.id == document_hash_id
         ).update({
             "status": "processing",
         })
@@ -39,7 +40,6 @@ class ProcessJob:
         ]
 
         nodes = self.splitter.get_nodes_from_documents(llama_docs)
-        # print(nodes)
 
         llama_docs = [
             {
@@ -57,8 +57,8 @@ class ProcessJob:
         self.qdrant_service.ingest_documents(llama_docs,user_id,doc_id)
         print("Ingested Successfully")
 
-        db.query(Document).filter(
-            Document.id == doc_id
+        db.query(DocumentHash).filter(
+            DocumentHash.id == document_hash_id
         ).update({
             "status": "embedded",
         })

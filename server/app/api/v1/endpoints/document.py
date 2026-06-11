@@ -2,7 +2,7 @@ from fastapi import APIRouter, UploadFile,status,Depends
 from shared_lib.core.exceptions import BaseAPIException
 from shared_lib.db.session import get_db
 from shared_lib.core.constants import UPLOAD_DIR
-from shared_lib.models import Document
+from shared_lib.models import Document,DocumentHash
 from fastapi.responses import FileResponse
 from app.middleware.auth import get_current_user
 import uuid
@@ -10,9 +10,11 @@ from shared_lib.infra.queue import ingest,delete_document
 from datetime import datetime,timezone
 from sqlalchemy.orm import Session
 from shared_lib.pydantic_models.models import JobData
+from app.lib.document_hash import get_file_hash
 import os
 from shared_lib.qdrant.vector_store import QdrantVectorService
 import shutil
+from sqlalchemy.orm import joinedload
 
 router = APIRouter()
 qdrant = QdrantVectorService()
@@ -34,25 +36,43 @@ async def upload(file:UploadFile,current_user=Depends(get_current_user),db:Sessi
                 ext_allowed = ", ".join(allowed_extensions)
                 message=f"Only {ext_allowed} files are accepted"
                 raise BaseAPIException(status_code=status.HTTP_400_BAD_REQUEST,message=message)
+        file_hash = await get_file_hash(file)
         file_path,file_name=save_file_to_disk(file)
         try:
-            new_document = Document(file_name=file_name,file_path=str(file_path),original_name=original_file_name,file_ext=ext,uploaded_by=str(current_user['id']))
+            document_hash = db.query(DocumentHash).filter(
+                DocumentHash.hash_value == file_hash
+            ).first()
+            should_process = False
+            if not document_hash:
+                document_hash = DocumentHash(
+                    hash_value=file_hash,
+                    status="uploaded"
+                )
+
+                db.add(document_hash)
+
+                db.flush()
+
+                should_process = True
+
+            new_document = Document(file_name=file_name,file_path=str(file_path),original_name=original_file_name,file_ext=ext,uploaded_by=str(current_user['id']), document_hash_id=document_hash.id)
 
             db.add(new_document)
             db.commit()
             db.flush()
-            new_doc_id = new_document.id
 
-            job_payload:JobData = {
-                "id":str(new_doc_id),
-                "server_file_name":new_document.file_name,
-                "filepath":new_document.file_path,
-                "uploaded_by":str(current_user['id']),
-                "status":"uploaded",
-                "ext":new_document.file_ext,
-                "filename":new_document.original_name
-            }
-            await ingest(job_payload)
+            if should_process:
+                job_payload:JobData = {
+                    "id": str(new_document.id),
+                    "hash_id": str(document_hash.id),
+                    "server_file_name": file_name,
+                    "filepath": str(file_path),
+                    "uploaded_by": str(current_user["id"]),
+                    "ext": ext,
+                    "filename": original_file_name
+                }
+
+                await ingest(job_payload)
 
             return {
                 "message": "Document Submitted for processing",
@@ -81,7 +101,9 @@ def get_documents(
     total = query.count()
 
     documents = (
-        query.order_by(Document.created_at.desc())
+        query
+        .options(joinedload(Document.document_hash))
+        .order_by(Document.created_at.desc())
         .offset(offset)
         .limit(limit)
         .all()
@@ -98,7 +120,7 @@ def get_documents(
                 "original_file_name": doc.original_name,
                 "file_ext": doc.file_ext,
                 "uploaded_at": doc.created_at,
-                "status":doc.status
+                "status": doc.document_hash.status.value
             }
             for doc in documents
         ]
