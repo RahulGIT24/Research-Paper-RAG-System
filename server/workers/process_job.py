@@ -25,42 +25,48 @@ class ProcessJob:
     def _process_pdf(self, filepath: str,doc_id,user_id,db,filename:str,server_file_name:str,document_hash_id:str):
         pdf = PyMuPDFLoader(file_path=filepath)
         docs = pdf.load()
+        existing_document_hash = (db.query(DocumentHash)
+        .filter(DocumentHash.id == document_hash_id, DocumentHash.status == "embedded")
+        .first())
+        llama_docs = []
+        if existing_document_hash:
+            self.qdrant_service.ingest_documents(llama_docs,user_id,doc_id,document_hash_id)
+            print("Ingested Successfully")
+            return True
+
         db.query(DocumentHash).filter(
-            DocumentHash.id == document_hash_id
+                DocumentHash.id == document_hash_id
         ).update({
-            "status": "processing",
+                "status": "processing",
         })
         db.commit()
         print("Status Updated")
 
-        #convert to llama index docs
+            #convert to llama index docs
         llama_docs = [
-            LlamaDocument(text=d.page_content, metadata={"page":i})
-            for i,d in enumerate(docs)
+                LlamaDocument(text=d.page_content, metadata={"page":i})
+                for i,d in enumerate(docs)
         ]
 
         nodes = self.splitter.get_nodes_from_documents(llama_docs)
 
         llama_docs = [
-            {
-                "text":node.get_content(),
-                "metadata":{
-                    "page":node.metadata.get("page"),
-                    "server_file_name":server_file_name,
-                    "source":"upload",
-                    "file_name":filename
+                {
+                    "text":node.get_content(),
+                    "metadata":{
+                        "page":node.metadata.get("page"),
+                        "server_file_name":server_file_name,
+                        "source":"upload",
+                        "file_name":filename
+                    }
                 }
-            }
-            for node in nodes
+                for node in nodes
         ]
 
-        self.qdrant_service.ingest_documents(llama_docs,user_id,doc_id)
-        print("Ingested Successfully")
-
         db.query(DocumentHash).filter(
-            DocumentHash.id == document_hash_id
+                DocumentHash.id == document_hash_id
         ).update({
-            "status": "embedded",
+                "status": "embedded",
         })
         db.commit()
 

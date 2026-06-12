@@ -1,12 +1,9 @@
 from typing import List
 import uuid
-
-from llama_index.core import Document
 from qdrant_client import QdrantClient
-from typing import Optional
 from qdrant_client.models import PointStruct
 from shared_lib.core.config import settings
-from qdrant_client.models import Filter, FieldCondition, MatchValue,SearchParams
+from qdrant_client.models import Filter, FieldCondition, MatchValue,SearchParams,MatchAny
 
 from .embed_model import EmbedModel
 
@@ -24,21 +21,40 @@ class QdrantVectorService:
         self.embed_model = EmbedModel.get_embed_model()
 
     def ingest_documents(
-        self,
-        documents: any,
-        user_id:str,
-        doc_id:str
-    ) -> bool:
-        # [{'text': 'My name is rahul', 'metadata': {'page': 0}}]
+    self,
+    documents: any,
+    user_id: str,
+    doc_id: str,
+    document_hash_id: str
+) -> bool:
+        existing_points, _ = self.client.scroll(
+            collection_name=self.collection_name,
+            scroll_filter=Filter(
+                must=[
+                    FieldCondition(
+                        key="document_hash_id",
+                        match=MatchValue(value=document_hash_id)
+                    )
+                ]
+            ),
+            with_payload=True,
+            limit=50
+        )
 
-        if not documents:
+        if existing_points:
+            for point in existing_points:
+                current_user_ids = point.payload.get("user_ids", [])
+
+                if user_id not in current_user_ids:
+                    self.client.set_payload(
+                        collection_name=self.collection_name,
+                        payload={"user_ids": current_user_ids + [user_id]},
+                        points=[point.id]
+                    )
             return True
 
         texts = [doc['text'] for doc in documents]
-
-        vectors = self.embed_model.get_text_embedding_batch(
-            texts
-        )
+        vectors = self.embed_model.get_text_embedding_batch(texts)
 
         points = [
             PointStruct(
@@ -46,12 +62,13 @@ class QdrantVectorService:
                 vector=vector,
                 payload={
                     "text": doc['text'],
+                    "document_hash_id": document_hash_id,
                     "page": doc['metadata'].get("page"),
                     "source": doc['metadata'].get("source"),
                     "server_file_name": doc['metadata'].get("server_file_name"),
                     "file_name": doc['metadata'].get("file_name"),
-                    "user_id":user_id,
-                    "doc_id":doc_id
+                    "user_ids": [user_id],
+                    "doc_id": doc_id
                 },
             )
             for doc, vector in zip(documents, vectors)
@@ -60,7 +77,7 @@ class QdrantVectorService:
         self.client.upsert(
             collection_name=self.collection_name,
             points=points,
-            wait=False, 
+            wait=False,
         )
 
         return True
@@ -69,8 +86,10 @@ class QdrantVectorService:
 
         match_conditions = [
             FieldCondition(
-                key="user_id",
-                match=MatchValue(value=str(user_id))
+                key="user_ids",
+                match=MatchAny(
+                    any=[str(user_id)]
+                )
             )
         ]
 

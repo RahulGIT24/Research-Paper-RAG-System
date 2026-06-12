@@ -50,7 +50,6 @@ async def upload(file:UploadFile,current_user=Depends(get_current_user),db:Sessi
             document_hash = db.query(DocumentHash).filter(
                 DocumentHash.hash_value == file_hash
             ).first()
-            should_process = False
             if not document_hash:
                 document_hash = DocumentHash(
                     hash_value=file_hash,
@@ -61,26 +60,23 @@ async def upload(file:UploadFile,current_user=Depends(get_current_user),db:Sessi
 
                 db.flush()
 
-                should_process = True
-
             new_document = Document(file_name=file_name,file_path=str(file_path),original_name=original_file_name,file_ext=ext,uploaded_by=str(current_user['id']), document_hash_id=document_hash.id)
 
             db.add(new_document)
             db.commit()
             db.flush()
 
-            if should_process:
-                job_payload:JobData = {
-                    "id": str(new_document.id),
-                    "hash_id": str(document_hash.id),
-                    "server_file_name": file_name,
-                    "filepath": str(file_path),
-                    "uploaded_by": str(current_user["id"]),
-                    "ext": ext,
-                    "filename": original_file_name
-                }
+            job_payload:JobData = {
+                "id": str(new_document.id),
+                "hash_id": str(document_hash.id),
+                "server_file_name": file_name,
+                "filepath": str(file_path),
+                "uploaded_by": str(current_user["id"]),
+                "ext": ext,
+                "filename": original_file_name
+            }
 
-                await ingest(job_payload)
+            await ingest(job_payload)
 
             return {
                 "message": "Document Submitted for processing",
