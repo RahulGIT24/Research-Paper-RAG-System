@@ -42,7 +42,7 @@ class ProcessJob:
         db.commit()
         print("Status Updated")
 
-            #convert to llama index docs
+        #convert to llama index docs
         llama_docs = [
                 LlamaDocument(text=d.page_content, metadata={"page":i})
                 for i,d in enumerate(docs)
@@ -62,13 +62,16 @@ class ProcessJob:
                 }
                 for node in nodes
         ]
-
+        self.qdrant_service.ingest_documents(llama_docs,user_id,doc_id,document_hash_id)
+        print("Ingested Successfully")
         db.query(DocumentHash).filter(
                 DocumentHash.id == document_hash_id
         ).update({
                 "status": "embedded",
         })
         db.commit()
+        return True
+
 
     def _process_docx_file():  
         pass

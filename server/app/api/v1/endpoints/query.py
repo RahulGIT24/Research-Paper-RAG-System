@@ -13,7 +13,7 @@ import re
 
 class SearchRequest(BaseModel):
     query: str
-    doc_id: str | None
+    doc_id: str | None = None
 
 router = APIRouter()
 text_embedding_model = EmbedModel.get_embed_model()
