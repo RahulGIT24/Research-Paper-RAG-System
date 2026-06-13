@@ -4,14 +4,6 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship,Mapped
 import uuid
 from datetime import datetime,timezone
-from sqlalchemy import Enum
-import enum
-
-class DocumentStatus(enum.Enum):
-    uploaded = "uploaded"
-    processing = "processing"
-    embedded = "embedded"
-    failed = "failed"
 
 class Document(Base):
     __tablename__ = 'documents'
@@ -24,13 +16,17 @@ class Document(Base):
     updated_at = Column(DateTime(timezone=True),default=datetime.now(timezone.utc))
     deleted_at = Column(DateTime(timezone=True),default=None)
     file_ext = Column(String,nullable=False)
-    uploaded_by = Column(ForeignKey("users.id"))
-    status = Column(
-    Enum(DocumentStatus),
-        default=DocumentStatus.uploaded
+    document_hash_id = Column(
+        ForeignKey("document_hash.id"),
+        nullable=False
     )
+    uploaded_by = Column(ForeignKey("users.id"))
     retry_count = Column(Integer, default=0)
     error_message = Column(Text,default=None,index=True)
     deleted = Column(Boolean,default=False)
 
     user: Mapped["User"] = relationship("User",back_populates="document")
+    document_hash = relationship(
+        "DocumentHash",
+        back_populates="documents"
+    )

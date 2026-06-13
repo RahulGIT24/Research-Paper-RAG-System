@@ -19,4 +19,3 @@ class User(Base):
     created_at = Column(DateTime(timezone=True),default=datetime.now(timezone.utc))
 
     document:Mapped["Document"] = relationship(back_populates="user")
-
