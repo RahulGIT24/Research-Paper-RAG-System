@@ -6,7 +6,8 @@ export function middleware(request: NextRequest) {
 
     const path = request.nextUrl.pathname;
 
-    const isAuthPage = path.startsWith('/signin') ||
+    const isAuthPage = path === '/' || 
+        path.startsWith('/signin') ||
         path.startsWith('/signup') ||
         path.startsWith('/verify') ||
         path.startsWith('/forgot-password') ||
@@ -26,5 +27,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-    matcher: ['/dashboard/:path*', '/signin', '/signup', '/verify', '/forgot-password', '/reset-password'],
+    matcher: ['/dashboard/:path*', '/signin', '/signup', '/verify', '/forgot-password', '/reset-password','/'],
 };

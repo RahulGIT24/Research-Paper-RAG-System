@@ -1,6 +1,6 @@
 from shared_lib.chunking.SemanticChunker import SemanticChunker
 import json
-from shared_lib.infra.redis import redis_client
+from shared_lib.infra.redis import redis_client,redis_instance
 import json
 from .process_job import ProcessJob
 import asyncio
@@ -15,7 +15,7 @@ GROUP = "rag-workers"
 CONSUMER = "worker-1"
 
 async def run_worker(processor:ProcessJob):
-
+    await redis_instance.create_document_consumer_groups()
     while True:
         response = await redis_client.xreadgroup(
             GROUP,
