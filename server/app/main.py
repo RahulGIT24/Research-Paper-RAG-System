@@ -31,17 +31,18 @@ def create_qdrant_collection():
     finally:
         client.close()
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    await redis_instance.create_consumer_groups()
-    print("Redis consumer groups ready")
+# @asynccontextmanager
+# async def lifespan(app: FastAPI):
+#     await redis_instance.create_consumer_groups()
+#     print("Redis consumer groups ready")
 
-    yield
+#     yield
 
-    await redis_instance.client.close()
+#     await redis_instance.client.close()
 
 create_qdrant_collection()
-app = FastAPI(title="DataVaultServer",lifespan=lifespan)
+# app = FastAPI(title="ResearchRAGServer",lifespan=lifespan)
+app = FastAPI(title="ResearchRAGServer")
 origins = [
     "http://localhost:5173",   
     "http://localhost:3000",   

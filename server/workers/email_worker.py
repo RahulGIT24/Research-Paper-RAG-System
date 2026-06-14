@@ -1,4 +1,4 @@
-from shared_lib.infra.redis import redis_client
+from shared_lib.infra.redis import redis_client,redis_instance
 import json
 from shared_lib.pydantic_models.models import EmailJob
 from shared_lib.Email import VerificationEmail,SMTPEmailSender,ForgotPasswordEmail
@@ -9,6 +9,7 @@ CONSUMER = "email-worker-1"
 sender = SMTPEmailSender()
 
 async def consume_email_jobs():
+    await redis_instance.create_email_consumer_groups()
     while True:
         try:
             response = await redis_client.xreadgroup(

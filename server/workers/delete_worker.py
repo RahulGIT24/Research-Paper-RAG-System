@@ -1,6 +1,6 @@
 import asyncio
 from pathlib import Path
-from shared_lib.infra.redis import redis_client
+from shared_lib.infra.redis import redis_client,redis_instance
 from shared_lib.db.session import SessionLocal
 import json
 from shared_lib.models import Document
@@ -14,7 +14,7 @@ CONSUMER_NAME = "delete-worker-1"
 
 
 async def process_delete_job(document_id: str,file_path:str):
-
+    await redis_instance.create_delete_consumer_groups()
     db = SessionLocal()
 
     try:

@@ -186,7 +186,7 @@ async def delete_document_api(
             message="Document not found"
         )
 
-    # document.deleted = True
+    document.deleted = True
     document.deleted_at = datetime.now(timezone.utc)
     db.commit()
     await delete_document(
