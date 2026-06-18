@@ -1,4 +1,5 @@
 from pydantic import BaseModel,EmailStr, Field
+from datetime import datetime
 
 class SignUp(BaseModel):
     name:str = Field(...,min_length=3,max_length=20)
@@ -34,3 +35,11 @@ class EmailJob(BaseModel):
     email_address: str
     token: str
     type:Literal["forgot-password","verification"]
+
+# class ConversationResponse(BaseModel):
+#     id: int
+#     name: str
+#     created_at: datetime
+
+#     class Config:
+#         from_attributes = True

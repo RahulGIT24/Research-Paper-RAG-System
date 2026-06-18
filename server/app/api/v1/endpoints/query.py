@@ -7,13 +7,18 @@ from shared_lib.qdrant.vector_store import QdrantVectorService
 from app.lib.llm import LLM
 from fastapi.responses import StreamingResponse
 from shared_lib.core.config import settings
+from shared_lib.models.messages import Messages
+from shared_lib.models.conversation import Conversation
 from sentence_transformers import CrossEncoder
 from rank_bm25 import BM25Okapi
 import re
+from shared_lib.db.session import get_db
+from sqlalchemy.orm import Session
 
 class SearchRequest(BaseModel):
     query: str
     doc_id: str | None = None
+    conversation_id:str
 
 router = APIRouter()
 text_embedding_model = EmbedModel.get_embed_model()
@@ -57,15 +62,26 @@ def rerank(query: str, results: list[dict], final_top_n: int = 5) -> list[dict]:
 
     return _cross_encode(query, results, top_10, top_n=final_top_n)
 
-
+#* to improve: Reduce db calls on saving messages
 @router.post("/ask")
-def query_documents(req: SearchRequest, current_user=Depends(get_current_user)):
+def query_documents(req: SearchRequest, current_user=Depends(get_current_user),db: Session = Depends(get_db)):
     doc_id = None
     if not req.query:
         raise BaseAPIException(message="Please provide query", status_code=400)
     if req.doc_id:
         doc_id = req.doc_id
     try:
+
+        user_conversation = db.query(Conversation).filter(Conversation.id == req.conversation_id, Conversation.user_id == current_user['id']).first()
+
+        if not user_conversation:
+            raise BaseAPIException(status_code=404,message="User conversation not found")
+        
+        new_message = Messages(role="user",content=req.query,conversation_id=req.conversation_id)
+        db.add(new_message)
+        db.commit()
+        
+
         embeddings   = text_embedding_model.get_text_embedding(req.query)
         user_id      = current_user["id"]
 
@@ -85,10 +101,18 @@ def query_documents(req: SearchRequest, current_user=Depends(get_current_user)):
 
         messages   = llm_layer.get_messages(context=context, query=req.query)
         llm_client = llm_layer.get_llm()
-
         def generate():
+            final_response = ""
             for chunk in llm_client.stream(messages):
+                final_response += chunk.content
                 yield chunk.content
+            assistant_message = Messages(
+                role="assistant",
+                content=final_response,
+                conversation_id=req.conversation_id
+            )
+            db.add(assistant_message)
+            db.commit()
 
         return StreamingResponse(generate(), media_type="text/plain")
 
