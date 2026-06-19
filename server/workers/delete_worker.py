@@ -12,18 +12,16 @@ STREAM_NAME = "rag:delete-jobs"
 GROUP_NAME = "rag-delete-workers"
 CONSUMER_NAME = "delete-worker-1"
 
-
-async def process_delete_job(document_id: str,file_path:str):
-    await redis_instance.create_delete_consumer_groups()
+async def process_delete_job(document_id: str,document_hash_id,file_path:str,user_id:str):
     db = SessionLocal()
 
     try:
         print(f"Processing delete job for {document_id}")
 
-        qdrant.delete_vectors(document_id)
+        qdrant.remove_user_from_vectors(document_hash_id,user_id)
         document = (
             db.query(Document)
-            .filter(Document.id == document_id)
+            .filter(Document.id == document_id,Document.uploaded_by == user_id)
             .first()
         )
 
@@ -55,6 +53,7 @@ async def process_delete_job(document_id: str,file_path:str):
 
 async def consume_delete_jobs():
     print("Delete worker started")
+    await redis_instance.create_delete_consumer_groups()
 
     while True:
         try:
@@ -75,7 +74,7 @@ async def consume_delete_jobs():
                 for message_id, fields in entries:
                     try:
                         job = json.loads(fields['job'])
-                        await process_delete_job(job['document_id'],job['file_path'])
+                        await process_delete_job(job['document_id'],job['document_hash_id'],job['file_path'],job['user_id'])
 
                         await redis_client.xack(
                             STREAM_NAME,

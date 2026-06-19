@@ -1,5 +1,5 @@
 from pydantic import BaseModel,EmailStr, Field
-from datetime import datetime
+import uuid
 
 class SignUp(BaseModel):
     name:str = Field(...,min_length=3,max_length=20)
@@ -29,6 +29,7 @@ class JobData(BaseModel):
 class DeleteJob(BaseModel):
     document_id: str
     file_path: str
+    document_hash_id:str
 
 from typing import Literal
 class EmailJob(BaseModel):

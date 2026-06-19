@@ -3,7 +3,7 @@ import uuid
 from qdrant_client import QdrantClient
 from qdrant_client.models import PointStruct
 from shared_lib.core.config import settings
-from qdrant_client.models import Filter, FieldCondition, MatchValue, SearchParams, MatchAny
+from qdrant_client.models import Filter, FieldCondition, MatchValue, SearchParams, MatchAny, SetPayload, SetPayloadOperation
 
 from .embed_model import EmbedModel
 
@@ -114,19 +114,49 @@ class QdrantVectorService:
             for point in search_result.points
         ]
 
-    # def delete_vectors(self, doc_id: str):
-    #     self.client.delete(
-    #         collection_name=settings.QDRANT_COLLECTION,
-    #         points_selector=Filter(
-    #             must=[
-    #                 FieldCondition(
-    #                     key="doc_id",
-    #                     match=MatchValue(value=str(doc_id))
-    #                 )
-    #             ]
-    #         )
-    #     )
-    #     return True
+    def remove_user_from_vectors(self, document_hash_id: str, user_id: str) -> bool:
+        scroll_filter = Filter(
+            must=[
+                FieldCondition(key="document_hash_id", match=MatchValue(value=document_hash_id)),
+                FieldCondition(key="user_ids", match=MatchValue(value=user_id)),
+            ]
+        )
+
+        offset = None
+        operations = []
+
+        while True:
+            points, offset = self.client.scroll(
+                collection_name=settings.QDRANT_COLLECTION,
+                scroll_filter=scroll_filter,
+                with_payload=True,
+                limit=1000,
+                offset=offset,
+            )
+
+            for point in points:
+                users = point.payload.get("user_ids", [])
+                if user_id in users:
+                    updated_users = [u for u in users if u != user_id]
+                    operations.append(
+                        SetPayloadOperation(
+                            set_payload=SetPayload(
+                                payload={"user_ids": updated_users},
+                                points=[point.id],
+                            )
+                        )
+                    )
+
+            if offset is None:
+                break
+
+        if operations:
+            self.client.batch_update_points(
+                collection_name=settings.QDRANT_COLLECTION,
+                update_operations=operations,
+            )
+        print("userids deleted")
+        return True
 
     def grant_user_access(self, document_hash_id: str, user_id: str) -> bool:
         all_points = self._scroll_all(

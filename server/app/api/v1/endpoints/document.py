@@ -193,6 +193,8 @@ async def delete_document_api(
         {
             "document_id": str(document.id),
             "file_path": document.file_path,
+            "user_id":str(current_user["id"]),
+            "document_hash_id":str(document.document_hash_id)
         }
     )
 
