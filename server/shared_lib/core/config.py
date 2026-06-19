@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     SMTP_USERNAME:str
     SMTP_PASSWORD:str
     CLIENT_URL:str
+    SMALL_LLM:str
     SERVER_URL:str
 
     class Config:

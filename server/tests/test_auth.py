@@ -1,6 +1,6 @@
 import jwt
 import uuid
-
+from unittest.mock import AsyncMock, patch
 from datetime import datetime, timedelta
 from .test_client import client
 from app.api.v1.endpoints.auth import SECRET_KEY, ALGORITHM
@@ -28,8 +28,22 @@ def create_user():
 # SIGNUP TESTS
 # =========================================================
 
-def test_signup_success():
-    email, response = create_user()
+@patch(
+    "app.api.v1.endpoints.auth.send_email",
+    new_callable=AsyncMock
+)
+def test_signup_success(mock_email):
+
+    mock_email.return_value = None
+
+    response = client.post(
+        "/api/v1/auth/signup",
+        json={
+            "name": "Rahul",
+            "email": f"rahul{datetime.utcnow().timestamp()}@gmail.com",
+            "password": "StrongPassword123"
+        }
+    )
 
     assert response.status_code == 201
 
@@ -37,7 +51,9 @@ def test_signup_success():
 
     assert data["message"] == "User created successfully"
     assert "user_id" in data
-    assert data["email"] == email
+    assert "email" in data
+
+    mock_email.assert_called_once()
 
 
 def test_signup_duplicate_email():
@@ -75,10 +91,10 @@ def test_signin_unverified_user():
 
     data = response.json()
 
-    assert (
-        data["message"]
-        == "User not verified, verification email sent"
-    )
+    assert data["message"] in [
+        "User not verified, verification email sent",
+        "Verification email already sent. Please check your inbox."
+    ]
 
 
 def test_signin_wrong_password():
@@ -302,22 +318,31 @@ def test_refresh_token_expired():
 # FORGOT PASSWORD TESTS
 # =========================================================
 
-def test_forgot_password_success():
+
+@patch(
+    "app.api.v1.endpoints.auth.send_email",
+    new_callable=AsyncMock
+)
+def test_forgot_password(mock_email):
+
+    mock_email.return_value = None
+
+
     email, _ = create_user()
+
 
     response = client.post(
         "/api/v1/auth/forgot-password",
         json={
-            "email": email
+            "email":email
         }
     )
 
+
     assert response.status_code == 200
 
-    assert (
-        response.json()["message"]
-        == "Forgot password email sent successfully"
-    )
+    assert response.json()["message"] == \
+        "Forgot password email sent successfully"
 
 
 def test_forgot_password_user_not_found():

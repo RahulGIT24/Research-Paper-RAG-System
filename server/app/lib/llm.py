@@ -1,13 +1,15 @@
-from app.lib.get_prompt import get_system_prompt,get_user_prompt
+from app.lib.get_prompt import get_system_prompt,get_user_prompt,get_classifier_prompt
 from langchain_groq import ChatGroq
 from shared_lib.core.config import settings
 from typing import List
 import os
+import json
 
 class LLM:
     def __init__(self):
         os.environ['GROQ_API_KEY']=settings.LLM_API
         self.llm = ChatGroq(model=settings.LLM_MODEL,max_retries=2,streaming=True)
+        self.classifier_llm = ChatGroq(model=settings.SMALL_LLM,max_retries=2,streaming=False)
         self.messages = [
             (
                 "system",get_system_prompt()
@@ -19,6 +21,12 @@ class LLM:
         # citations not working well
         self.messages.append(query_tup)
         return self.messages
+
+    def reconstruct_query(self,query:str,history):
+        res= self.classifier_llm.invoke(get_classifier_prompt(query,history))
+        content = json.loads(res.content)
+        print(content.get('rewritten_query'))
+        return content.get('rewritten_query')
 
     def get_llm(self):
         return self.llm

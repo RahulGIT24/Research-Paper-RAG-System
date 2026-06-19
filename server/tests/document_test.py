@@ -2,11 +2,19 @@ from io import BytesIO
 from app.api.v1.endpoints.auth import SECRET_KEY, ALGORITHM
 from .test_auth import create_user,get_authenticated_user
 from .test_client import client
+import uuid
 import jwt
 from datetime import datetime, timedelta
+from reportlab.pdfgen import canvas
 
 def fake_pdf():
-    return ("test.pdf", BytesIO(b"%PDF-1.4 fake content"), "application/pdf")
+    return (
+        f"{uuid.uuid4()}.pdf",
+        BytesIO(
+            f"%PDF-1.4 fake content {uuid.uuid4()}".encode()
+        ),
+        "application/pdf"
+    )
 def auth_headers(token: str):
     return {
         "Authorization": f"Bearer {token}"
@@ -36,8 +44,8 @@ def test_upload_pdf_success():
     }
 
     file_data = {
-        "file": ("test.pdf", BytesIO(b"%PDF-1.4 test"), "application/pdf")
-    }
+    "file": fake_pdf()
+}
 
     response = client.post(
         "/api/v1/document/upload",
@@ -53,8 +61,8 @@ def test_get_documents():
 
     # upload one document first
     file_data = {
-        "file": ("test.pdf", BytesIO(b"%PDF-1.4 test"), "application/pdf")
-    }
+    "file": fake_pdf()
+}
 
     client.post("/api/v1/document/upload", files=file_data, cookies=cookies)
 
@@ -76,7 +84,7 @@ def test_get_single_document():
     cookies = get_authenticated_user()
 
     file_data = {
-        "file": ("test.pdf", BytesIO(b"%PDF-1.4 test"), "application/pdf")
+        "file": fake_pdf()
     }
 
     upload_res = client.post(
@@ -113,7 +121,7 @@ def test_delete_document():
     cookies = get_authenticated_user()
 
     file_data = {
-        "file": ("test.pdf", BytesIO(b"%PDF-1.4 test"), "application/pdf")
+        "file": fake_pdf()
     }
 
     client.post(

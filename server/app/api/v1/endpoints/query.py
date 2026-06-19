@@ -7,13 +7,18 @@ from shared_lib.qdrant.vector_store import QdrantVectorService
 from app.lib.llm import LLM
 from fastapi.responses import StreamingResponse
 from shared_lib.core.config import settings
+from shared_lib.models.messages import Messages
+from shared_lib.models.conversation import Conversation
 from sentence_transformers import CrossEncoder
 from rank_bm25 import BM25Okapi
 import re
+from shared_lib.db.session import get_db
+from sqlalchemy.orm import Session
 
 class SearchRequest(BaseModel):
     query: str
     doc_id: str | None = None
+    conversation_id:str
 
 router = APIRouter()
 text_embedding_model = EmbedModel.get_embed_model()
@@ -57,16 +62,47 @@ def rerank(query: str, results: list[dict], final_top_n: int = 5) -> list[dict]:
 
     return _cross_encode(query, results, top_10, top_n=final_top_n)
 
+def get_context(conversation_id:str,db:Session):
+    messages = (
+            db.query(Messages)
+            .filter(
+                Messages.conversation_id == conversation_id
+            )
+            .order_by(
+                Messages.created_at.desc()
+            )
+            .limit(5)
+            .all()
+    )
+    return [
+        {
+            "role": msg.role,
+            "content": msg.content
+        }
+        for msg in reversed(messages)
+    ]
 
+#* to improve: Reduce db calls on saving messages
 @router.post("/ask")
-def query_documents(req: SearchRequest, current_user=Depends(get_current_user)):
+def query_documents(req: SearchRequest, current_user=Depends(get_current_user),db: Session = Depends(get_db)):
     doc_id = None
     if not req.query:
         raise BaseAPIException(message="Please provide query", status_code=400)
     if req.doc_id:
         doc_id = req.doc_id
     try:
-        embeddings   = text_embedding_model.get_text_embedding(req.query)
+        user_conversation = db.query(Conversation).filter(Conversation.id == req.conversation_id, Conversation.user_id == current_user['id']).first()
+        messages = get_context(conversation_id=req.conversation_id,db=db)
+        query = llm_layer.reconstruct_query(req.query,history=messages)
+
+        if not user_conversation:
+            raise BaseAPIException(status_code=404,message="User conversation not found")
+        
+        new_message = Messages(role="user",content=req.query,conversation_id=req.conversation_id)
+        db.add(new_message)
+        db.commit()
+
+        embeddings   = text_embedding_model.get_text_embedding(query)
         user_id      = current_user["id"]
 
         search_results = qdrant.query(
@@ -76,19 +112,27 @@ def query_documents(req: SearchRequest, current_user=Depends(get_current_user)):
             doc_id=doc_id
         )
 
-        reranked = rerank(req.query, search_results, final_top_n=5)
+        reranked = rerank(query, search_results, final_top_n=5)
 
         context = "\n\n".join([
             f"[Source {i+1} | page {r.get('page')} | access_url {settings.SERVER_URL}/document/view/{r.get('server_file_name')} | filename {r.get('file_name')}]\n{r.get('text', '')}"
             for i, r in enumerate(reranked)
         ])
 
-        messages   = llm_layer.get_messages(context=context, query=req.query)
+        messages   = llm_layer.get_messages(context=context, query=query)
         llm_client = llm_layer.get_llm()
-
         def generate():
+            final_response = ""
             for chunk in llm_client.stream(messages):
+                final_response += chunk.content
                 yield chunk.content
+            assistant_message = Messages(
+                role="assistant",
+                content=final_response,
+                conversation_id=req.conversation_id
+            )
+            db.add(assistant_message)
+            db.commit()
 
         return StreamingResponse(generate(), media_type="text/plain")
 
