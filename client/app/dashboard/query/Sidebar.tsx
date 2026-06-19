@@ -57,7 +57,7 @@ const Sidebar = ({ sidebarOpen, setMessages, setError }: SidebarProps) => {
 
     useEffect(() => {
         (async () => await getAllConversations())();
-    }, [])
+    }, [searchParams])
 
     return (
         <aside

@@ -22,8 +22,6 @@ function QueryPageContent() {
     const pathName = usePathname();
     const router = useRouter();
 
-    const activeConvId = searchParams.get("conversation_id");
-
     useEffect(() => {
         if (chatContainerRef.current) {
             chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
@@ -54,7 +52,7 @@ function QueryPageContent() {
             role: "user",
             content: query,
         };
-        await createConversation(query.trim());
+        const conversation_id = await createConversation(query.trim());
 
         const assistantMessageId = crypto.randomUUID();
         const assistantMessage: Message = {
@@ -70,7 +68,7 @@ function QueryPageContent() {
         setError("");
         setIsStreaming(true);
 
-        const req_body: { query: string; doc_id?: string; conversation_id: string } = { query: query, conversation_id: searchParams.get("conversation_id") as string };
+        const req_body: { query: string; doc_id?: string; conversation_id: string } = { query: query, conversation_id: conversation_id ? conversation_id : searchParams.get("conversation_id") as string };
 
         if (searchParams.get("document") != null) {
             req_body.doc_id = searchParams.get("document") as string;
@@ -130,6 +128,9 @@ function QueryPageContent() {
                         : msg
                 )
             );
+            const params = new URLSearchParams(searchParams.toString());
+            params.set("conversation_id", conversation_id);
+            router.push(`${pathName}?${params.toString()}`);
         } catch (err) {
             if (axios.isAxiosError(err)) {
                 setError(err.response?.data?.error || "Failed to process request");
@@ -205,9 +206,8 @@ function QueryPageContent() {
         if (searchParams.get("conversation_id")) return;
         try {
             const res = await api.post(`/conversation/create`, { name });
-            const params = new URLSearchParams(searchParams.toString());
-            params.set("conversation_id", res.data.conversation_id);
-            router.push(`${pathName}?${params.toString()}`);
+            
+            return res.data.conversation_id
         } catch (err) {
             if (axios.isAxiosError(err)) {
                 setError(err.response?.data?.error || "Failed to process request");
@@ -237,19 +237,11 @@ function QueryPageContent() {
                             ☰
                         </button>
                         <h2 className="text-3xl font-bold text-slate-800 tracking-tight">
-                            Global Research Query
+                            Query Here
                         </h2>
                     </div>
 
                     <div className="flex gap-3">
-                        {messages.length > 0 && (
-                            <button
-                                onClick={clearHistory}
-                                className="px-4 py-2 rounded-xl font-bold text-slate-500 bg-slate-200 shadow-[4px_4px_8px_#c1c9d2,-4px_-4px_8px_#ffffff] hover:shadow-[inset_2px_2px_4px_#c1c9d2,inset_-2px_-2px_4px_#ffffff] transition-all duration-300 text-sm"
-                            >
-                                Clear chat
-                            </button>
-                        )}
                         <Link
                             href="/dashboard"
                             className="px-6 py-2 rounded-xl font-bold text-slate-700 bg-slate-200 shadow-[4px_4px_8px_#c1c9d2,-4px_-4px_8px_#ffffff] hover:shadow-[inset_2px_2px_4px_#c1c9d2,inset_-2px_-2px_4px_#ffffff] transition-all duration-300"
