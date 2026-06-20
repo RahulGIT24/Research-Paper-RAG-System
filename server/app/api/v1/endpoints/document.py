@@ -8,6 +8,7 @@ from app.middleware.auth import get_current_user
 import uuid
 from shared_lib.infra.queue import ingest,delete_document
 from datetime import datetime,timezone
+import asyncio
 from sqlalchemy.orm import Session
 from shared_lib.pydantic_models.models import JobData
 from app.lib.document_hash import get_file_hash
@@ -76,7 +77,7 @@ async def upload(file:UploadFile,current_user=Depends(get_current_user),db:Sessi
                 "filename": original_file_name
             }
 
-            await ingest(job_payload)
+            asyncio.create_task(ingest(job_payload))
 
             return {
                 "message": "Document Submitted for processing",
@@ -170,37 +171,46 @@ async def delete_document_api(
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    document = (
-        db.query(Document)
-        .filter(
-            Document.id == document_id,
-            Document.uploaded_by == str(current_user["id"]),
-            Document.deleted == False,
-        )
-        .first()
-    )
-
-    if not document:
-        raise BaseAPIException(
-            status_code=404,
-            message="Document not found"
+    try:
+        document = (
+            db.query(Document)
+            .filter(
+                Document.id == document_id,
+                Document.uploaded_by == str(current_user["id"]),
+                Document.deleted == False,
+            )
+            .first()
         )
 
-    document.deleted = True
-    document.deleted_at = datetime.now(timezone.utc)
-    db.commit()
-    await delete_document(
-        {
-            "document_id": str(document.id),
-            "file_path": document.file_path,
-            "user_id":str(current_user["id"]),
-            "document_hash_id":str(document.document_hash_id)
+        if not document:
+            raise BaseAPIException(
+                status_code=404,
+                message="Document not found"
+            )
+
+        document.deleted = True
+        document.deleted_at = datetime.now(timezone.utc)
+        db.commit()
+        asyncio.create_task(delete_document(
+            {
+                "document_id": str(document.id),
+                "file_path": document.file_path,
+                "user_id":str(current_user["id"]),
+                "document_hash_id":str(document.document_hash_id)
+            }
+        ))
+
+        return {
+            "message": "Document deleted successfully"
         }
-    )
-
-    return {
-        "message": "Document deleted successfully"
-    }
+    except BaseAPIException:
+        raise
+    except Exception as e:
+        print(e)
+        raise BaseAPIException(
+                status_code=500,
+                message="Internal Server Error"
+            )
 
 @router.get("/view/{filename}")
 async def view_uploaded_document(

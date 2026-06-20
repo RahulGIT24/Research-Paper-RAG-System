@@ -4,6 +4,8 @@ import json
 from shared_lib.core.exceptions import BaseAPIException
 
 async def ingest(job_data:JobData):
+    print("JOB DATA TYPE:", type(job_data))
+    print("JOB DATA:", job_data)
     try:
         job_json_string=json.dumps(job_data)
         await redis_client.xadd(

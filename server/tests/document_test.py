@@ -8,11 +8,17 @@ from datetime import datetime, timedelta
 from reportlab.pdfgen import canvas
 
 def fake_pdf():
+    buffer = BytesIO()
+
+    c = canvas.Canvas(buffer)
+    c.drawString(100, 750, "Hello world test PDF")
+    c.save()
+
+    buffer.seek(0)
+
     return (
         f"{uuid.uuid4()}.pdf",
-        BytesIO(
-            f"%PDF-1.4 fake content {uuid.uuid4()}".encode()
-        ),
+        buffer,
         "application/pdf"
     )
 def auth_headers(token: str):
@@ -52,7 +58,7 @@ def test_upload_pdf_success():
         files=file_data,
         cookies=cookies
     )
-
+    print(response.json())
     assert response.status_code == 200
     assert response.json()["message"] == "Document Submitted for processing"
 
@@ -137,6 +143,7 @@ def test_delete_document():
         f"/api/v1/document/{doc_id}",
         cookies=cookies
     )
+    print(response)
 
     assert response.status_code == 200
     assert response.json()["message"] == "Document deleted successfully"
