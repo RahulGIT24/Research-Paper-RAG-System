@@ -4,6 +4,11 @@ A production-ready Retrieval-Augmented Generation (RAG) API for searching and qu
 
 ---
 
+### Project Screenshots
+
+![Dashboard](images/1.png)
+![Chat Interface](images/2.png)
+
 ## Table of Contents
 
 - [Overview](#overview)
@@ -81,7 +86,7 @@ FastAPI
 | PDF parsing | PyMuPDF (via LangChain PyMuPDFLoader) |
 | Chunking | LlamaIndex semantic splitter |
 | Database | PostgreSQL via SQLAlchemy |
-| LLM | Streaming via LangChain LLM layer |
+| LLM | Streaming via LangChain ChatGroq |
 
 ---
 
@@ -298,6 +303,8 @@ This is the same scroll-filter pattern used during **upload** (where a `user_id`
 ---
 
 ### Conversational Context Handling (Query Rewriting)
+
+![Query Rewriting](images/rewriting.png)
 
 Multi-turn conversations break naive RAG: a follow-up question like *"what are vectors in this?"* embeds to something close to nothing useful on its own — "this" carries no semantic content. Vector search needs a query that stands on its own.
 
