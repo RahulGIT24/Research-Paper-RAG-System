@@ -50,7 +50,6 @@ async def process_delete_job(document_id: str,document_hash_id,file_path:str,use
     finally:
         db.close()
 
-
 async def consume_delete_jobs():
     print("Delete worker started")
     await redis_instance.create_delete_consumer_groups()
