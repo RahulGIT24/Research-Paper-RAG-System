@@ -3,10 +3,10 @@ name: Server CI
 on:
     push:
         branches:
-            - ci-pipeline
+            - master
     pull_request:
         branches:
-            - ci-pipeline
+            - master
 
 jobs:
     test:
