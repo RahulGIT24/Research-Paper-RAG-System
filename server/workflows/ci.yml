@@ -1,0 +1,72 @@
+name: Server CI
+
+on:
+    push:
+        branches:
+            - ci-pipeline
+    pull_request:
+        branches:
+            - ci-pipeline
+
+jobs:
+    test:
+        runs-on: ubuntu-latest
+        services:
+            postgres:
+                image: postgres:15
+                env:
+                    POSTGRES_USER: postgres
+                    POSTGRES_PASSWORD: root
+                    POSTGRES_DB: documentintelligence
+                ports:
+                    - 5432:5432
+            redis:
+                image: redis:latest
+                ports:
+                    - 6379:6379
+            qdrant:
+                image: qdrant/qdrant:latest
+                ports:
+                  - 6333:6333
+        steps:
+        - name: Checkout repository
+          uses: actions/checkout@v4
+
+        - name: Install uv
+          uses: astral-sh/setup-uv@v5
+          with:
+            version: "latest"
+
+        - name: Setup Python
+          run: uv python install 3.12
+
+        - name: Install dependencies
+          working-directory: server
+          run: |
+                uv sync --frozen
+        
+        - name: Run db migration
+          working-directory: server
+          env:
+            DATABASE_URL: postgresql://postgres:root@localhost:5432/documentintelligence
+          run: |
+            uv run alembic upgrade head
+        
+        - name: Run Pytest
+          working-directory: server
+          env:
+            DATABASE_URL: postgresql://postgres:root@localhost:5432/documentintelligence
+            SECRET_KEY: sample_secret_key
+            REDIS_HOST:  localhost
+            REDIS_PORT :  6379
+            QDRANT_URL: http://localhost:6333
+            QDRANT_COLLECTION: documents
+            LLM_API: sample_dummy_key
+            LLM_MODEL: llama-3.3-70b-versatile
+            CLIENT_URL: http://localhost:3000
+            SERVER_URL: http://localhost:8000/api/v1
+            SMTP_USERNAME: rahul@gmail.com
+            SMTP_PASSWORD: 'sample pass'
+            SMALL_LLM: llama-3.1-8b-instant
+          run: |
+            uv run pytest -v
