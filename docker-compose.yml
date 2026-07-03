@@ -1,0 +1,124 @@
+services:
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: documentintelligence
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - doc-net
+
+  redis:
+    image: redis
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - doc-net
+
+  qdrant:
+    image: qdrant/qdrant
+    restart: always
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant-data:/qdrant/storage
+    networks:
+      - doc-net
+
+  backend:
+    build:
+      context: ./server
+    image: docintelligence-server:latest
+    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+      - qdrant
+    env_file:
+      - ./server/.docker.env
+    volumes:
+      - hf-cache:/root/.cache/huggingface
+    networks:
+      - doc-net
+
+  migrate:
+    image: docintelligence-server:latest
+    command: uv run alembic upgrade head
+    depends_on:
+      - db
+    env_file:
+      - ./server/.docker.env
+    restart: "no"
+    networks:
+      - doc-net
+
+  email-worker:
+    image: docintelligence-server:latest
+    command: uv run python -m workers.email_worker
+    depends_on:
+      - db
+      - redis
+      - qdrant
+    env_file:
+      - ./server/.docker.env
+    volumes:
+      - hf-cache:/root/.cache/huggingface
+    networks:
+      - doc-net
+
+  ingestion-worker:
+    image: docintelligence-server:latest
+    command: uv run python -m workers.ingestion_worker
+    depends_on:
+      - db
+      - redis
+      - qdrant
+    env_file:
+      - ./server/.docker.env
+    volumes:
+      - hf-cache:/root/.cache/huggingface
+    networks:
+      - doc-net
+
+  delete-worker:
+    image: docintelligence-server:latest
+    command: uv run python -m workers.delete_worker
+    depends_on:
+      - db
+      - redis
+      - qdrant
+    env_file:
+      - ./server/.docker.env
+    volumes:
+      - hf-cache:/root/.cache/huggingface
+    networks:
+      - doc-net
+
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - doc-net
+
+volumes:
+  postgres-data:
+  qdrant-data:
+  hf-cache:
+
+networks:
+  doc-net:

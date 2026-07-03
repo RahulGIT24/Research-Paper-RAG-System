@@ -4,3 +4,5 @@ venv
 .env
 .venv
 uploads
+.env.sample
+.docker.env
