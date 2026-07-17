@@ -31,5 +31,19 @@ dependencies = [
     "reportlab>=4.5.1",
     "sentence-transformers>=5.5.1",
     "sqlalchemy>=2.0.50",
+    "torch>=2.0",
     "uvicorn>=0.48.0",
 ]
+
+# torch is a transitive dep (via sentence-transformers/llama-index) that
+# defaults to CUDA wheels, pulling in ~10GB of unused nvidia-* packages
+# since nothing here runs on a GPU. Route it to the CPU-only wheel index.
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cpu" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
